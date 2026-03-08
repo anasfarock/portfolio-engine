@@ -1,4 +1,4 @@
-# Portfolio Engine
+# Smart Portfolio Analysis and Insights Engine
 
 A comprehensive Portfolio Analysis and Insights Engine developed with a React (Vite) frontend powered by Tailwind CSS, and a FastAPI (Python) backend connected to PostgreSQL.
 
@@ -16,7 +16,7 @@ Before you begin, ensure you have the following installed on your machine:
 
 ### 1. Clone the Repository
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/anasfarock/portfolio-engine.git
 cd portfolio-engine
 ```
 
