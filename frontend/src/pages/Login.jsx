@@ -4,6 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { LogIn } from 'lucide-react';
 
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import GlassPanel from '../components/ui/GlassPanel';
+
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -42,46 +46,35 @@ export default function Login() {
                     Sign in to your portfolio engine
                 </p>
 
-                <div className="glass-panel p-8 sm:rounded-2xl sm:px-10">
+                <GlassPanel>
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
                             <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
                                 {error}
                             </div>
                         )}
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Email address
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="input-field"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                className="input-field"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+                        <Input
+                            label="Email address"
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+
+                        <Input
+                            label="Password"
+                            id="password"
+                            type="password"
+                            autoComplete="current-password"
+                            required
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
 
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
@@ -103,16 +96,9 @@ export default function Login() {
                             </div>
                         </div>
 
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="btn-primary flex justify-center items-center gap-2"
-                            >
-                                {loading ? 'Signing in...' : 'Sign in'}
-                                {!loading && <LogIn className="w-4 h-4" />}
-                            </button>
-                        </div>
+                        <Button type="submit" isLoading={loading} icon={LogIn}>
+                            Sign in
+                        </Button>
                     </form>
 
                     <div className="mt-6">
@@ -121,7 +107,7 @@ export default function Login() {
                                 <div className="w-full border-t border-gray-300 dark:border-gray-600" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-full relative z-20" style={{ background: 'var(--bg-override, inherit)' }}>
+                                <span className="px-2 bg-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-full relative z-20">
                                     Or create an account
                                 </span>
                             </div>
@@ -133,7 +119,7 @@ export default function Login() {
                             </Link>
                         </div>
                     </div>
-                </div>
+                </GlassPanel>
             </div>
         </div>
     );

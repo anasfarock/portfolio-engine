@@ -4,6 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { UserPlus } from 'lucide-react';
 
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import GlassPanel from '../components/ui/GlassPanel';
+
 export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -48,7 +52,7 @@ export default function Register() {
                     Start analyzing your portfolio today
                 </p>
 
-                <div className="glass-panel p-8 sm:rounded-2xl sm:px-10">
+                <GlassPanel>
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
                             <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
@@ -56,67 +60,42 @@ export default function Register() {
                             </div>
                         )}
 
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Full Name
-                            </label>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                autoComplete="name"
-                                required
-                                className="input-field"
-                                placeholder="John Doe"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                            />
-                        </div>
+                        <Input
+                            label="Full Name"
+                            id="name"
+                            type="text"
+                            autoComplete="name"
+                            required
+                            placeholder="John Doe"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                        />
 
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Email address
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="input-field"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
+                        <Input
+                            label="Email address"
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                className="input-field"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+                        <Input
+                            label="Password"
+                            id="password"
+                            type="password"
+                            autoComplete="new-password"
+                            required
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
 
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="btn-primary flex justify-center items-center gap-2"
-                            >
-                                {loading ? 'Creating account...' : 'Sign up'}
-                                {!loading && <UserPlus className="w-4 h-4" />}
-                            </button>
-                        </div>
+                        <Button type="submit" isLoading={loading} icon={UserPlus}>
+                            Sign up
+                        </Button>
                     </form>
 
                     <div className="mt-6">
@@ -137,7 +116,7 @@ export default function Register() {
                             </Link>
                         </div>
                     </div>
-                </div>
+                </GlassPanel>
             </div>
         </div>
     );
