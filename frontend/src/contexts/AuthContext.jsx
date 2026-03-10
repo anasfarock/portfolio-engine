@@ -13,12 +13,23 @@ export const AuthProvider = ({ children }) => {
     // You can set the default base URL for Axios here
     // axios.defaults.baseURL = 'http://localhost:8000';
 
+    const fetchUser = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/users/me');
+            setUser(response.data);
+        } catch (error) {
+            console.error("Failed to fetch user profile", error);
+            // If token is invalid, log out
+            if (error.response?.status === 401) {
+                logout();
+            }
+        }
+    };
+
     useEffect(() => {
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            // Here you would typically fetch the user profile with the token
-            // For now, we'll just simulate a logged in user
-            setUser({ email: 'user@example.com' });
+            fetchUser();
         } else {
             delete axios.defaults.headers.common['Authorization'];
             setUser(null);
@@ -66,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, register, logout, loading, refetchUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

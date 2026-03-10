@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from jose import JWTError, jwt
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
@@ -59,3 +61,44 @@ def login_user(user: schemas.UserLogin, db: db_dependency):
         data={"sub": db_user.email}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+        
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
+
+@app.get("/users/me", response_model=schemas.UserResponse)
+def read_users_me(current_user: Annotated[models.User, Depends(get_current_user)]):
+    return current_user
+
+@app.put("/users/me", response_model=schemas.UserResponse)
+def update_user_me(
+    user_update: schemas.UserUpdate, 
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    if user_update.full_name is not None:
+        current_user.full_name = user_update.full_name
+        
+    if user_update.password is not None and user_update.password.strip() != "":
+        current_user.hashed_password = auth.get_password_hash(user_update.password)
+        
+    db.commit()
+    db.refresh(current_user)
+    return current_user
