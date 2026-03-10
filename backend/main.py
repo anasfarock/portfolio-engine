@@ -1,3 +1,9 @@
+import os
+from dotenv import load_dotenv
+
+# Load all environment variables at the absolute top before nested imports run
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
@@ -18,7 +24,7 @@ app = FastAPI(title="Portfolio Engine Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -155,5 +161,10 @@ def delete_avatar(
         db.refresh(current_user)
         
     return current_user
+
+from routers import brokers, portfolio
+
+app.include_router(brokers.router)
+app.include_router(portfolio.router)
 
 # Forcing a reload to pick up python-multipart installation

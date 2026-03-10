@@ -75,10 +75,10 @@ export default function AvatarDropdown() {
                         <Link
                             to="/api-keys"
                             onClick={() => setIsOpen(false)}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left cursor-not-allowed opacity-60"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                         >
                             <Key className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                            Manage API Keys (Soon)
+                            Manage API Keys
                         </Link>
                         <Link
                             to="/settings"
