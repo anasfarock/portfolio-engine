@@ -13,6 +13,7 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     full_name: str | None = None
+    avatar_url: str | None = None
     is_active: bool
 
     class Config:

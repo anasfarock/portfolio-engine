@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
@@ -6,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
 import models, schemas, auth, database
+import os
+import shutil
+import time
 
 # Create tables if they don't exist
 models.Base.metadata.create_all(bind=database.engine)
@@ -19,6 +23,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static directory for avatars
+os.makedirs("static/avatars", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Database Dependency
 def get_db():
@@ -102,3 +110,50 @@ def update_user_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@app.post("/users/me/avatar", response_model=schemas.UserResponse)
+async def upload_avatar(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency,
+    file: UploadFile = File(...)
+):
+    # Validate file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File provided is not an image.")
+
+    # Create a unique filename
+    file_extension = file.filename.split(".")[-1]
+    filename = f"avatar_{current_user.id}.{file_extension}"
+    file_path = os.path.join("static", "avatars", filename)
+
+    # Save the file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Update user model - adding timestamp to bust browser cache
+    avatar_url = f"http://localhost:8000/static/avatars/{filename}?t={int(time.time())}"
+    current_user.avatar_url = avatar_url
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    return current_user
+
+@app.delete("/users/me/avatar", response_model=schemas.UserResponse)
+def delete_avatar(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    if current_user.avatar_url:
+        # Extract filename to delete the static file if we wanted to
+        # filename = current_user.avatar_url.split("/")[-1]
+        # file_path = os.path.join("static", "avatars", filename)
+        # if os.path.exists(file_path): os.remove(file_path)
+        
+        current_user.avatar_url = None
+        db.commit()
+        db.refresh(current_user)
+        
+    return current_user
+
+# Forcing a reload to pick up python-multipart installation

@@ -37,11 +37,19 @@ export default function AvatarDropdown() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800 transition-colors shadow-sm"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800 transition-colors shadow-sm overflow-hidden"
             >
-                <span className="text-sm font-medium tracking-wide">
-                    {user ? getInitials(user.full_name, user.email) : 'U'}
-                </span>
+                {user?.avatar_url ? (
+                    <img
+                        src={user.avatar_url}
+                        alt="User Avatar"
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <span className="text-sm font-medium tracking-wide">
+                        {user ? getInitials(user.full_name, user.email) : 'U'}
+                    </span>
+                )}
             </button>
 
             {isOpen && (
