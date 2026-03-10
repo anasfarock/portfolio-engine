@@ -28,7 +28,7 @@ export default function Login() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center dark:bg-gray-900 transition-colors duration-300 relative overflow-hidden">
-            <ThemeToggle />
+            <ThemeToggle className="absolute top-4 right-4 z-50" />
 
             {/* Decorative background elements */}
             <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob"></div>
