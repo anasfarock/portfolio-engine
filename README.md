@@ -38,12 +38,24 @@ chmod +x setup.sh
 
 *(Alternatively, you can manually create a virtual env: `python -m venv venv`, activate it with `venv\Scripts\activate` or `source venv/bin/activate`, and run `pip install -r requirements.txt`)*
 
-**Configuration Database (.env):**
-Create a `.env` file in the `backend` folder to configure your database connection and secret key. If you omit this, the app will automatically use a local SQLite database (`portfolio.db`) for testing.
+**Configuration & Security (.env):**
+Create a `.env` file in the `backend` folder to configure your database connection and secret encryption keys. 
+
+* `PORTFOLIO_DB_URL`: If omitted, the app will automatically use a local SQLite database (`portfolio.db`) for testing.
+* `SECRET_KEY`: Used for encrypting user JWT authentication sessions.
+* `ENCRYPTION_KEY`: **[CRITICAL]** The backend securely hashes all Broker API secrets into the database using Fernet symmetric encryption. You **MUST** provide a valid 32-byte URL-safe base64 string or the backend will refuse to boot!
+
+To generate a valid `ENCRYPTION_KEY` instantly on your machine, activate your python environment and run:
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Copy the generated string and paste it into `.env`:
 ```env
 # backend/.env
 PORTFOLIO_DB_URL=postgres://your_username:your_password@localhost/portfolio_db
 SECRET_KEY=your_super_secret_key_here
+ENCRYPTION_KEY=your_generated_fernet_key_here
 ```
 
 **Run the Backend Server:**
@@ -71,5 +83,7 @@ npm run dev
 Once both servers are running:
 1. Open your browser and navigate to `http://localhost:5173`.
 2. Toggle between dark and light modes using the icon in the top right corner.
-3. Register a new account.
-4. Sign in to view your dashboard.
+3. Register a new account and Sign in.
+4. Open the User Avatar dropdown (Top Right) -> **Manage API Keys**.
+5. Inside the "Alpaca" connection block, paste your specific Alpaca Paper API Key, Secret Key, and network endpoint.
+6. Press the **Sync** button—the python worker will authenticate dynamically, ingest your portfolio allocations safely into the local database, and propagate them onto your Dashboard UI!
