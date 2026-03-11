@@ -106,7 +106,7 @@ export default function ApiKeys() {
                     </p>
                 </div>
                 {!showForm && (
-                    <Button onClick={() => setShowForm(true)} icon={Plus}>
+                    <Button onClick={() => setShowForm(true)} icon={Plus} className="!w-auto !py-2 !px-4">
                         Link Broker
                     </Button>
                 )}
