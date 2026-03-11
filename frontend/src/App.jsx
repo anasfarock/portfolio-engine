@@ -9,6 +9,7 @@ import ApiKeys from './pages/ApiKeys';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
+import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
   const { token, loading } = useAuth();
@@ -40,9 +41,17 @@ function Dashboard() {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
+      
+      // Auto-negotiate live stream sync with API keys FIRST natively!
+      try {
+        await axios.post('http://localhost:8000/portfolio/sync', {}, { headers: { Authorization: `Bearer ${token}` } });
+      } catch (syncErr) {
+        console.error("Auto-sync background pipeline failed: ", syncErr);
+      }
+
       const [summaryRes, assetsRes] = await Promise.all([
         axios.get('http://localhost:8000/portfolio/summary', { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('http://localhost:8000/portfolio/assets', { headers: { Authorization: `Bearer ${token}` } })
@@ -58,9 +67,20 @@ function Dashboard() {
   }, [token]);
 
   useEffect(() => {
+    let pollingInterval;
     if (token) {
+      // Intial boot up load
       fetchDashboardData();
+      
+      // Real-time market data streaming (15 seconds)
+      pollingInterval = setInterval(() => {
+        fetchDashboardData(true);
+      }, 15000);
     }
+    
+    return () => {
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
   }, [token, fetchDashboardData]);
 
   const handleDeleteAsset = async (assetId) => {
@@ -78,7 +98,17 @@ function Dashboard() {
 
   return (
     <div className="w-full animate-fade-in relative">
-      <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Dashboard Overview</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
+        <button 
+          onClick={() => fetchDashboardData(false)}
+          disabled={loading}
+          className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          title="Manual Refresh"
+        >
+          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-primary-500' : ''}`} />
+        </button>
+      </div>
       <p className="mb-8 text-gray-600 dark:text-gray-400">Manage your Alpaca automated broker connections to sync your portfolio.</p>
 
       {/* Decorative background elements matching the login page theme */}

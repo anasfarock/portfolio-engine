@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, database
+import models, schemas, database, alpaca_sync
 from main import get_current_user
 
 router = APIRouter(
@@ -10,6 +10,21 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[Session, Depends(database.get_db)]
+
+@router.post("/sync")
+def sync_all_portfolios(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    """Dynamically sweeps all connected brokers for the user and pulls the absolute newest prices into the database for the active viewing session."""
+    creds = db.query(models.BrokerCredential).filter(models.BrokerCredential.user_id == current_user.id).all()
+    results = []
+    for c in creds:
+        if c.broker_name == "Alpaca":
+            res = alpaca_sync.sync_alpaca_account(c.id, current_user.id, db)
+            results.append({"broker": c.broker_name, "status": res["status"]})
+    
+    return {"message": "Auto-sync pipeline completed", "details": results}
 
 @router.get("/assets", response_model=List[schemas.AssetResponse])
 def get_assets(
