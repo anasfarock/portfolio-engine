@@ -31,6 +31,7 @@ function Dashboard() {
   const { token } = useAuth();
 
   const [summary, setSummary] = useState({
+    total_capital: 0.0,
     total_value: 0.0,
     active_positions: 0,
     day_return_perc: 0.0,
@@ -84,9 +85,15 @@ function Dashboard() {
       <div className="absolute top-20 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob pointer-events-none"></div>
       <div className="absolute bottom-20 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 dark:opacity-10 pointer-events-none"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="glass-panel p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Total Value</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Total Capital</h3>
+          <p className="text-3xl font-black text-green-600 dark:text-green-400 mt-2">
+            ${loading ? "..." : (summary.total_capital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+        <div className="glass-panel p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assets Value</h3>
           <p className="text-3xl font-black text-primary-600 mt-2">
             ${loading ? "..." : summary.total_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>

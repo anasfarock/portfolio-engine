@@ -33,6 +33,7 @@ class BrokerCredentialBase(BaseModel):
     api_key: str
     identifier: str | None = None
     endpoint: str | None = None
+    total_capital: str | None = None
 
 class BrokerCredentialCreate(BrokerCredentialBase):
     api_secret: str
@@ -50,6 +51,9 @@ class AssetBase(BaseModel):
     asset_class: str
     quantity: str
     average_buy_price: str
+    current_price: str | None = None
+    pnl: str | None = None
+    pnl_percent: str | None = None
 
 class AssetCreate(AssetBase):
     pass
@@ -57,12 +61,12 @@ class AssetCreate(AssetBase):
 class AssetResponse(AssetBase):
     id: int
     user_id: int
-    current_price: float | None = None
     
     class Config:
         from_attributes = True
 
 class PortfolioSummary(BaseModel):
+    total_capital: float
     total_value: float
     active_positions: int
     day_return_perc: float

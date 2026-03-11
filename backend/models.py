@@ -28,6 +28,7 @@ class BrokerCredential(Base):
     api_key = Column(String, nullable=False)
     identifier = Column(String, nullable=True) # E.g. account id or email
     endpoint = Column(String, nullable=True) # Manual base URL provided by user
+    total_capital = Column(String, nullable=True) # Fetched from account API
     encrypted_secret = Column(String, nullable=False) # Changed from encrypted_password to secret for Alpaca
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -42,6 +43,9 @@ class Asset(Base):
     asset_class = Column(String, nullable=False) # 'Stock', 'Crypto', 'CFD'
     quantity = Column(String, nullable=False) # Storing as String for decimal precision
     average_buy_price = Column(String, nullable=False) 
+    current_price = Column(String, nullable=True)
+    pnl = Column(String, nullable=True)
+    pnl_percent = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="assets")

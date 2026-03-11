@@ -17,9 +17,7 @@ def get_assets(
     db: db_dependency
 ):
     assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
-    # In a real app we would ping the live price feed. For simplicity:
-    for asset in assets:
-        asset.current_price = float(asset.average_buy_price) * 1.05 # Mocked 5% gain for UI representation if live price missing
+    # Now that we fetch real-time Alpaca data, mock overrides are completely removed.
     return assets
 
 @router.delete("/assets/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -45,18 +43,24 @@ def get_portfolio_summary(
     db: db_dependency
 ):
     assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
+    creds = db.query(models.BrokerCredential).filter(models.BrokerCredential.user_id == current_user.id).all()
     
     total_val = 0.0
     total_cost = 0.0
+    total_capital = 0.0
     
+    for c in creds:
+        if c.total_capital:
+            total_capital += float(c.total_capital)
+            
     for a in assets:
-        qty = float(a.quantity)
-        buy_price = float(a.average_buy_price)
+        qty = float(a.quantity) if a.quantity else 0.0
+        buy_price = float(a.average_buy_price) if a.average_buy_price else 0.0
+        
+        # Real time asset value utilizing pulled native API tracking
+        live_price = float(a.current_price) if a.current_price else 0.0
+        
         cost = qty * buy_price
-        
-        # Simulating live price for aesthetics
-        live_price = buy_price * 1.05 
-        
         val = qty * live_price
         
         total_cost += cost
@@ -66,6 +70,7 @@ def get_portfolio_summary(
     day_return_perc = (day_return_abs / total_cost * 100) if total_cost > 0 else 0.0
     
     return schemas.PortfolioSummary(
+        total_capital=total_capital,
         total_value=total_val,
         active_positions=len(assets),
         day_return_perc=day_return_perc,

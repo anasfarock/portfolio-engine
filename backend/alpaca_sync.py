@@ -28,6 +28,14 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
     }
     
     try:
+        # Fetch Account details for Total Capital (Equity)
+        account_res = requests.get(f"{base_endpoint}/account", headers=headers, timeout=10)
+        account_res.raise_for_status()
+        account_data = account_res.json()
+        
+        # Save equity natively to DB credential
+        cred.total_capital = str(account_data.get('equity', 0))
+        
         # Fetch Active Positions from Alpaca
         positions_res = requests.get(f"{base_endpoint}/positions", headers=headers, timeout=10)
         positions_res.raise_for_status()
@@ -38,18 +46,28 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
         
         # Parse Alpaca Response
         for p in positions_data:
-            # typical schema: p['symbol'], p['asset_class'], p['qty'], p['avg_entry_price']
             sym = p.get('symbol', 'UNKNOWN')
             ast_class = p.get('asset_class', 'us_equity').title()
             qty = str(p.get('qty', 0))
             buy_price = str(p.get('avg_entry_price', 0))
+            
+            # Fetch native actual price and returns
+            current = str(p.get('current_price', 0))
+            p_nl = str(p.get('unrealized_pl', 0))
+            
+            # Convert decimal percentage e.g 0.015 to 1.5% for visual scaling
+            plpc = p.get('unrealized_plpc', 0)
+            p_nl_percent = str(float(plpc) * 100) if plpc else "0"
             
             ast = models.Asset(
                 user_id=user_id,
                 symbol=sym,
                 asset_class=ast_class,
                 quantity=qty,
-                average_buy_price=buy_price
+                average_buy_price=buy_price,
+                current_price=current,
+                pnl=p_nl,
+                pnl_percent=p_nl_percent
             )
             db.add(ast)
             

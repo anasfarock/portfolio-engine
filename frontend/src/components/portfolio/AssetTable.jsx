@@ -42,10 +42,10 @@ export default function AssetTable({ assets, loading, onDelete }) {
                     {assets.map((asset) => {
                         const qty = parseFloat(asset.quantity);
                         const buyPrice = parseFloat(asset.average_buy_price);
-                        const currentPrice = asset.current_price || buyPrice;
+                        const currentPrice = asset.current_price ? parseFloat(asset.current_price) : buyPrice;
 
-                        const profitLoss = currentPrice - buyPrice;
-                        const profitLossPerc = buyPrice > 0 ? (profitLoss / buyPrice) * 100 : 0;
+                        const profitLoss = asset.pnl ? parseFloat(asset.pnl) : (currentPrice - buyPrice);
+                        const profitLossPerc = asset.pnl_percent ? parseFloat(asset.pnl_percent) : (buyPrice > 0 ? (profitLoss / buyPrice) * 100 : 0);
                         const isPositive = profitLoss >= 0;
 
                         return (
