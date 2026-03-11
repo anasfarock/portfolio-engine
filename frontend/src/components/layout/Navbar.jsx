@@ -13,9 +13,6 @@ export default function Navbar() {
                     {/* Logo area */}
                     <div className="flex">
                         <Link to="/dashboard" className="flex-shrink-0 flex items-center gap-2 group">
-                            <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg group-hover:bg-primary-200 dark:group-hover:bg-primary-800/60 transition-colors">
-                                <Activity className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                            </div>
                             <span className="font-bold text-xl text-gray-900 dark:text-white hidden sm:block">
                                 Portfolio Engine
                             </span>
