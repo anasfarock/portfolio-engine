@@ -54,14 +54,14 @@ export default function ApiKeys() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setMessage({ type: 'success', text: 'Alpaca account linked successfully!' });
+            setMessage({ type: 'success', text: `${brokerName} account linked successfully!` });
             setShowForm(false);
             setApiKey('');
             setApiSecret('');
             setEndpoint('');
             fetchCredentials();
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to link Alpaca' });
+            setMessage({ type: 'error', text: err.response?.data?.detail || `Failed to link ${brokerName}` });
         } finally {
             setIsSubmitting(false);
         }
@@ -90,7 +90,7 @@ export default function ApiKeys() {
             });
             setMessage({ type: 'success', text: res.data.message });
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to sync Alpaca' });
+            setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to sync broker' });
         } finally {
             setSyncingId(null);
         }
@@ -134,31 +134,32 @@ export default function ApiKeys() {
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                             >
                                 <option value="Alpaca">Alpaca Paper Trading</option>
+                                <option value="Binance Demo">Binance Spot Demo</option>
                             </select>
                         </div>
 
                         <Input
-                            label="API Key ID (APCA-API-KEY-ID)"
+                            label={brokerName === 'Alpaca' ? "API Key ID (APCA-API-KEY-ID)" : "API Key"}
                             type="text"
                             required
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="e.g. PKXQ9E..."
+                            placeholder={brokerName === 'Alpaca' ? "e.g. PKXQ9E..." : "Your Binance Testnet API Key"}
                         />
                         <Input
-                            label="Secret Key (APCA-API-SECRET-KEY)"
+                            label={brokerName === 'Alpaca' ? "Secret Key (APCA-API-SECRET-KEY)" : "Secret Key"}
                             type="password"
                             required
                             value={apiSecret}
                             onChange={(e) => setApiSecret(e.target.value)}
-                            placeholder="Your Alpaca Secret Key"
+                            placeholder={brokerName === 'Alpaca' ? "Your Alpaca Secret Key" : "Your Binance Secret Key"}
                         />
                         <Input
                             label="API Endpoint (Optional)"
                             type="text"
                             value={endpoint}
                             onChange={(e) => setEndpoint(e.target.value)}
-                            placeholder="e.g. https://paper-api.alpaca.markets/v2"
+                            placeholder={brokerName === 'Alpaca' ? "e.g. https://paper-api.alpaca.markets/v2" : "e.g. https://demo-api.binance.com"}
                         />
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-6">

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, database, alpaca_sync
+import models, schemas, database, alpaca_sync, binance_sync
 from main import get_current_user
 
 router = APIRouter(
@@ -22,6 +22,9 @@ def sync_all_portfolios(
     for c in creds:
         if c.broker_name == "Alpaca":
             res = alpaca_sync.sync_alpaca_account(c.id, current_user.id, db)
+            results.append({"broker": c.broker_name, "status": res["status"]})
+        elif c.broker_name == "Binance Demo":
+            res = binance_sync.sync_binance_account(c.id, current_user.id, db)
             results.append({"broker": c.broker_name, "status": res["status"]})
     
     return {"message": "Auto-sync pipeline completed", "details": results}

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, encryption, database, alpaca_sync
+import models, schemas, encryption, database, alpaca_sync, binance_sync
 from main import get_current_user
 
 router = APIRouter(
@@ -22,7 +22,7 @@ def create_broker_credential(
     
     new_cred = models.BrokerCredential(
         user_id=current_user.id,
-        broker_name="Alpaca",
+        broker_name=credential.broker_name,
         api_key=credential.api_key,
         identifier=credential.identifier,
         endpoint=credential.endpoint,
@@ -88,6 +88,11 @@ def sync_broker_credential(
         
     if cred.broker_name == "Alpaca":
         result = alpaca_sync.sync_alpaca_account(credential_id, current_user.id, db)
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result["message"])
+        return {"message": result["message"]}
+    elif cred.broker_name == "Binance Demo":
+        result = binance_sync.sync_binance_account(credential_id, current_user.id, db)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return {"message": result["message"]}
