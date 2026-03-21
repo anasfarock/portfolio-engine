@@ -1,4 +1,4 @@
-# SPAI Engine — Smart Portfolio Analysis & Insights
+# Smart Portfolio Analysis & Insights Engine — 
 
 A full-stack multi-broker portfolio dashboard built with **React (Vite)** + **FastAPI (Python)**. Connect your Alpaca and Binance accounts to view real-time positions, capital, and P&L in one unified interface.
 
