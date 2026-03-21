@@ -136,6 +136,21 @@ export default function ApiKeys() {
                                 <option value="Alpaca">Alpaca Paper Trading</option>
                                 <option value="Binance Demo">Binance Spot Demo</option>
                             </select>
+
+                            {/* Dynamic API key helper link */}
+                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <span>Don't have an API key?</span>
+                                <a
+                                    href={brokerName === 'Alpaca'
+                                        ? 'https://app.alpaca.markets/paper-trading/overview'
+                                        : 'https://demo.binance.com/en/my/settings/api-management'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                                >
+                                    Get your {brokerName === 'Alpaca' ? 'Alpaca' : 'Binance Demo'} API key →
+                                </a>
+                            </div>
                         </div>
 
                         <Input
