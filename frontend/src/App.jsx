@@ -47,7 +47,7 @@ function Dashboard() {
   const fetchDashboardData = useCallback(async (isBackground = false) => {
     try {
       if (!isBackground) setLoading(true);
-      
+
       // Auto-negotiate live stream sync with API keys FIRST natively!
       try {
         await axios.post('http://localhost:8000/portfolio/sync', {}, { headers: { Authorization: `Bearer ${token}` } });
@@ -80,13 +80,13 @@ function Dashboard() {
     if (token) {
       // Intial boot up load
       fetchDashboardData();
-      
+
       // Real-time market data streaming (15 seconds)
       pollingInterval = setInterval(() => {
         fetchDashboardData(true);
       }, 15000);
     }
-    
+
     return () => {
       if (pollingInterval) clearInterval(pollingInterval);
     };
@@ -131,8 +131,8 @@ function Dashboard() {
 
   return (
     <div className="w-full animate-fade-in relative">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
         <div className="flex items-center gap-2">
           {/* Broker Account Dropdown */}
           {brokerOptions.length >= 1 && (
@@ -194,7 +194,7 @@ function Dashboard() {
           </button>
         </div>
       </div>
-      <p className="mb-8 text-gray-600 dark:text-gray-400">Manage your Alpaca automated broker connections to sync your portfolio.</p>
+
 
       {/* Decorative background elements matching the login page theme */}
       <div className="absolute top-20 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob pointer-events-none dark:hidden"></div>
