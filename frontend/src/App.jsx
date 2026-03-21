@@ -15,7 +15,7 @@ function ProtectedRoute({ children }) {
   const { token, loading } = useAuth();
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
       <div className="animate-pulse flex flex-col items-center">
         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="font-medium">Loading...</p>
@@ -112,8 +112,8 @@ function Dashboard() {
       <p className="mb-8 text-gray-600 dark:text-gray-400">Manage your Alpaca automated broker connections to sync your portfolio.</p>
 
       {/* Decorative background elements matching the login page theme */}
-      <div className="absolute top-20 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob pointer-events-none"></div>
-      <div className="absolute bottom-20 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 dark:opacity-10 pointer-events-none"></div>
+      <div className="absolute top-20 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob pointer-events-none dark:hidden"></div>
+      <div className="absolute bottom-20 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 dark:hidden pointer-events-none"></div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="glass-panel p-6">

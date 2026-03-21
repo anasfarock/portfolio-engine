@@ -34,12 +34,12 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center dark:bg-gray-900 transition-colors duration-300 relative">
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center dark:bg-black transition-colors duration-300 relative">
             <ThemeToggle className="absolute top-4 right-4 z-50" />
 
             {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob"></div>
-            <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-2000 dark:opacity-10"></div>
+            <div className="absolute top-0 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob dark:hidden"></div>
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-2000 dark:hidden"></div>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
                 <div className="flex justify-center text-primary-600 dark:text-primary-500 mb-4">
@@ -104,7 +104,7 @@ export default function Register() {
                                 <div className="w-full border-t border-gray-300 dark:border-gray-600" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-full relative z-20">
+                                <span className="px-2 bg-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-black rounded-full relative z-20">
                                     Already have an account?
                                 </span>
                             </div>

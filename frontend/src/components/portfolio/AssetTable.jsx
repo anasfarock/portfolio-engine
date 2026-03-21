@@ -29,7 +29,7 @@ export default function AssetTable({ assets, loading, onDelete }) {
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                    <tr className="bg-gray-50/50 dark:bg-[#141414]/50 border-b border-gray-100 dark:border-gray-800">
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Asset</th>
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Class</th>
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Qty</th>
@@ -52,7 +52,7 @@ export default function AssetTable({ assets, loading, onDelete }) {
                             <tr key={asset.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-800/30 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
+                                        <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-[#1a1a1a] flex items-center justify-center text-primary-600 dark:text-gray-300 font-bold border dark:border-gray-800">
                                             {asset.symbol.substring(0, 2)}
                                         </div>
                                         <div>

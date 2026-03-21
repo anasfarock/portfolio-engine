@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 
 export default function ProtectedLayout() {
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-black transition-colors duration-300 flex flex-col">
             <Navbar />
 
             {/* Main Content Area */}
