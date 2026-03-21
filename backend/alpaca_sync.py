@@ -67,7 +67,8 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
                 average_buy_price=buy_price,
                 current_price=current,
                 pnl=p_nl,
-                pnl_percent=p_nl_percent
+                pnl_percent=p_nl_percent,
+                broker_name="Alpaca"
             )
             db.add(ast)
             

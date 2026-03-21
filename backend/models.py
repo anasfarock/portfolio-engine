@@ -46,6 +46,7 @@ class Asset(Base):
     current_price = Column(String, nullable=True)
     pnl = Column(String, nullable=True)
     pnl_percent = Column(String, nullable=True)
+    broker_name = Column(String, nullable=True)  # 'Alpaca', 'Binance Demo', etc.
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="assets")

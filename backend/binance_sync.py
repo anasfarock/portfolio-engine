@@ -102,7 +102,8 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                 average_buy_price=str(current_price),
                 current_price=str(current_price),
                 pnl="0",
-                pnl_percent="0"
+                pnl_percent="0",
+                broker_name="Binance Demo"
             )
             db.add(ast)
             

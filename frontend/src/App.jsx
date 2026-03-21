@@ -40,6 +40,9 @@ function Dashboard() {
   });
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [credentials, setCredentials] = useState([]);
+  const [selectedBrokers, setSelectedBrokers] = useState(['ALL']);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async (isBackground = false) => {
     try {
@@ -59,6 +62,12 @@ function Dashboard() {
 
       setSummary(summaryRes.data);
       setAssets(assetsRes.data);
+
+      // Fetch credentials to build the broker filter options
+      try {
+        const credsRes = await axios.get('http://localhost:8000/brokers/credentials', { headers: { Authorization: `Bearer ${token}` } });
+        setCredentials(credsRes.data);
+      } catch (e) { /* silent */ }
     } catch (err) {
       console.error("Failed to load dashboard data", err);
     } finally {
@@ -96,18 +105,94 @@ function Dashboard() {
     }
   };
 
+  // Derive unique broker names from credentials for the filter
+  const brokerOptions = [...new Set(credentials.map(c => c.broker_name))];
+
+  const toggleBroker = (name) => {
+    if (name === 'ALL') {
+      setSelectedBrokers(['ALL']);
+      return;
+    }
+    setSelectedBrokers(prev => {
+      const withoutAll = prev.filter(b => b !== 'ALL');
+      const already = withoutAll.includes(name);
+      const next = already ? withoutAll.filter(b => b !== name) : [...withoutAll, name];
+      return next.length === 0 ? ['ALL'] : next;
+    });
+  };
+
+  // Filter assets based on selection
+  const filteredAssets = selectedBrokers.includes('ALL')
+    ? assets
+    : assets.filter(a => selectedBrokers.includes(a.broker_name));
+
+  // Label for the dropdown trigger button
+  const filterLabel = selectedBrokers.includes('ALL') ? 'All Accounts' : `${selectedBrokers.length} Account${selectedBrokers.length > 1 ? 's' : ''}`;
+
   return (
     <div className="w-full animate-fade-in relative">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
-        <button 
-          onClick={() => fetchDashboardData(false)}
-          disabled={loading}
-          className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          title="Manual Refresh"
-        >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-primary-500' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Broker Account Dropdown */}
+          {brokerOptions.length >= 1 && (
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(o => !o)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors"
+              >
+                <span>🏦</span>
+                <span>{filterLabel}</span>
+                <svg className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+
+              {dropdownOpen && (
+                <>
+                  {/* Backdrop to close on outside click */}
+                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-52 z-20 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+                      Filter by Account
+                    </div>
+                    {/* All option */}
+                    <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedBrokers.includes('ALL')}
+                        onChange={() => toggleBroker('ALL')}
+                        className="accent-primary-600 w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">All Accounts</span>
+                    </label>
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
+                    {brokerOptions.map(broker => (
+                      <label key={broker} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedBrokers.includes(broker)}
+                          onChange={() => toggleBroker(broker)}
+                          className="accent-primary-600 w-4 h-4"
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{broker}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={() => fetchDashboardData(false)}
+            disabled={loading}
+            className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            title="Manual Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-primary-500' : ''}`} />
+          </button>
+        </div>
       </div>
       <p className="mb-8 text-gray-600 dark:text-gray-400">Manage your Alpaca automated broker connections to sync your portfolio.</p>
 
@@ -144,7 +229,7 @@ function Dashboard() {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Current Holdings</h2>
         <GlassPanel className="overflow-hidden">
           <AssetTable
-            assets={assets}
+            assets={filteredAssets}
             onDelete={handleDeleteAsset}
             loading={loading}
           />

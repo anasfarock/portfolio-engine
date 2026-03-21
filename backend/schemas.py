@@ -54,6 +54,7 @@ class AssetBase(BaseModel):
     current_price: str | None = None
     pnl: str | None = None
     pnl_percent: str | None = None
+    broker_name: str | None = None
 
 class AssetCreate(AssetBase):
     pass
