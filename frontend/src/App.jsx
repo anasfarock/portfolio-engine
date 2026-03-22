@@ -129,6 +129,38 @@ function Dashboard() {
   // Label for the dropdown trigger button
   const filterLabel = selectedBrokers.includes('ALL') ? 'All Accounts' : `${selectedBrokers.length} Account${selectedBrokers.length > 1 ? 's' : ''}`;
 
+  // Compute summary metrics from filteredAssets so filter affects ALL tiles
+  const filteredSummary = (() => {
+    if (selectedBrokers.includes('ALL')) return summary;
+
+    // Total Capital: sum total_capital from only the matching credentials
+    const filteredCapital = credentials
+      .filter(c => selectedBrokers.includes(c.broker_name))
+      .reduce((sum, c) => sum + parseFloat(c.total_capital || 0), 0);
+
+    // Assets Value: sum (qty * current_price) for filtered assets
+    const filteredValue = filteredAssets.reduce((sum, a) => {
+      const qty = parseFloat(a.quantity || 0);
+      const price = parseFloat(a.current_price || a.average_buy_price || 0);
+      return sum + qty * price;
+    }, 0);
+
+    // P&L: sum of pnl
+    const totalPnl = filteredAssets.reduce((sum, a) => sum + parseFloat(a.pnl || 0), 0);
+    const costBasis = filteredAssets.reduce((sum, a) => {
+      return sum + parseFloat(a.quantity || 0) * parseFloat(a.average_buy_price || 0);
+    }, 0);
+    const dayReturnPerc = costBasis > 0 ? (totalPnl / costBasis) * 100 : 0;
+
+    return {
+      total_capital: filteredCapital,
+      total_value: filteredValue,
+      active_positions: filteredAssets.length,
+      day_return_perc: dayReturnPerc,
+      day_return_abs: totalPnl,
+    };
+  })();
+
   return (
     <div className="w-full animate-fade-in relative">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
@@ -204,23 +236,23 @@ function Dashboard() {
         <div className="glass-panel p-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Total Capital</h3>
           <p className="text-3xl font-black text-green-600 dark:text-green-400 mt-2">
-            ${loading ? "..." : (summary.total_capital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${loading ? "..." : (filteredSummary.total_capital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="glass-panel p-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assets Value</h3>
           <p className="text-3xl font-black text-primary-600 mt-2">
-            ${loading ? "..." : summary.total_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${loading ? "..." : filteredSummary.total_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="glass-panel p-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Active Positions</h3>
-          <p className="text-3xl font-black text-indigo-600 mt-2">{loading ? "..." : summary.active_positions}</p>
+          <p className="text-3xl font-black text-indigo-600 mt-2">{loading ? "..." : filteredSummary.active_positions}</p>
         </div>
         <div className="glass-panel p-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">24h Return</h3>
-          <p className={`text-3xl font-black mt-2 ${summary.day_return_perc >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {loading ? "..." : `${summary.day_return_perc > 0 ? '+' : ''}${summary.day_return_perc.toFixed(2)}%`}
+          <p className={`text-3xl font-black mt-2 ${filteredSummary.day_return_perc >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {loading ? "..." : `${filteredSummary.day_return_perc > 0 ? '+' : ''}${filteredSummary.day_return_perc.toFixed(2)}%`}
           </p>
         </div>
       </div>
