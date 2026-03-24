@@ -162,6 +162,53 @@ def verify_mfa(payload: schemas.MfaVerify, db: db_dependency):
     access_token = auth.create_access_token(data={"sub": email})
     return {"access_token": access_token, "token_type": "bearer"}
 
+@app.post("/auth/forgot-password")
+def forgot_password(payload: schemas.ForgotPasswordRequest, db: db_dependency):
+    """
+    Generate a password reset token for the given email.
+    DEV MODE: returns the token directly in the response instead of sending an email.
+    Returns a generic success message regardless of whether the email exists (security best practice).
+    """
+    import uuid, datetime as dt
+    db_user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if db_user:
+        token = str(uuid.uuid4())
+        db_user.password_reset_token = token
+        db_user.password_reset_expires = dt.datetime.utcnow() + dt.timedelta(minutes=30)
+        db.commit()
+        # In dev mode we return the token so it can be pasted into the UI
+        return {
+            "message": "If this email is registered, a reset link has been generated.",
+            "dev_token": token  # Remove this in production
+        }
+    return {"message": "If this email is registered, a reset link has been generated."}
+
+@app.post("/auth/reset-password")
+def reset_password(payload: schemas.ResetPasswordRequest, db: db_dependency):
+    """Validate the reset token and update the user's password."""
+    import datetime as dt
+    if not payload.new_password or len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    db_user = db.query(models.User).filter(models.User.password_reset_token == payload.token).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token.")
+    if db_user.password_reset_expires and db_user.password_reset_expires < dt.datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Reset token has expired. Please request a new one.")
+
+    # Reject if the new password is the same as the current one
+    import bcrypt as _bcrypt
+    if _bcrypt.checkpw(payload.new_password.encode('utf-8'), db_user.hashed_password.encode('utf-8')):
+        raise HTTPException(status_code=400, detail="New password must be different from your current password.")
+
+    db_user.hashed_password = auth.get_password_hash(payload.new_password)
+    db_user.password_reset_token = None
+    db_user.password_reset_expires = None
+    db.commit()
+    return {"message": "Password updated successfully. You can now log in."}
+
+
+
 @app.post("/users/me/avatar", response_model=schemas.UserResponse)
 async def upload_avatar(
     current_user: Annotated[models.User, Depends(get_current_user)],

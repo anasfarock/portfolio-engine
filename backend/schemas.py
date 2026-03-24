@@ -32,6 +32,13 @@ class MfaVerify(BaseModel):
     temp_token: str
     code: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 # Broker Schemas
 class BrokerCredentialBase(BaseModel):
     broker_name: str
