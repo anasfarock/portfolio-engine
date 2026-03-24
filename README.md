@@ -4,13 +4,24 @@ A full-stack multi-broker portfolio dashboard built with **React (Vite)** + **Fa
 
 ## Features
 
-- 📊 **Real-time Dashboard** — auto-syncs live data every 15 seconds from connected brokers
-- 🔄 **Manual Refresh** — trigger an immediate sync from the Dashboard at any time
-- 🏦 **Multi-Broker Support** — Alpaca Paper Trading + Binance Spot Demo
-- 🔍 **Account Filter** — dropdown to view positions from All or specific broker accounts
-- 🔐 **Secure Credential Storage** — API secrets encrypted with Fernet symmetric encryption
-- 🌙 **Dark / Light Mode** — system-aware theme with a pure black AMOLED dark mode
-- 👤 **User Profiles** — JWT-authenticated accounts with avatar support
+- 📊 **Real-time Dashboard** — auto-syncs live data with customizable intervals (15/30/60s).
+- 🔄 **Manual Refresh** — trigger an immediate sync from the Dashboard at any time.
+- 🏦 **Multi-Broker Hub** — connect Alpaca and Binance accounts into one interface.
+- 🔐 **Dual-Layer Security** — Two-Factor Authentication (MFA) and Fernet API secret encryption.
+- 🌙 **Theme Control** — toggle between Dark, Light, and System themes in App Settings.
+- 👤 **UserProfile management** — centered profile management with avatar uploading.
+- 📄 **Data Portability** — export your full portfolio and activity as clean PDF reports or JSON backups.
+- 🔑 **Recovery Flow** — dedicated Forgot Password and secure Reset Password screens.
+
+---
+
+## Security
+
+We prioritize the safety of your financial credentials:
+
+1. **At-Rest Encryption**: Your Broker API Keys and Secrets are encrypted using AES-256 (via the Fernet specification) before they ever touch our database.
+2. **2FA Support**: Enable Two-Factor Authentication in the **App Settings** for an extra layer of login security.
+3. **Password Sovereignty**: Dedicated, mobile-responsive screens for password recovery and account-rotation.
 
 ---
 
