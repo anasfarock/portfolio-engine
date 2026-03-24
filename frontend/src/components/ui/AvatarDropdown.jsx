@@ -83,10 +83,10 @@ export default function AvatarDropdown() {
                         <Link
                             to="/settings"
                             onClick={() => setIsOpen(false)}
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left cursor-not-allowed opacity-60"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                         >
                             <Settings className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                            Settings (Soon)
+                            Settings
                         </Link>
                     </div>
 

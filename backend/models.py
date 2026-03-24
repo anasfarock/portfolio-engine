@@ -21,6 +21,7 @@ class User(Base):
     broker_credentials = relationship("BrokerCredential", back_populates="user", cascade="all, delete-orphan")
     assets = relationship("Asset", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+    preferences = relationship("UserPreferences", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 class BrokerCredential(Base):
     __tablename__ = "broker_credentials"
@@ -69,3 +70,24 @@ class Transaction(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="transactions")
+
+class UserPreferences(Base):
+    __tablename__ = "user_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+
+    # Portfolio Preferences
+    currency = Column(String, default="USD")
+    sync_interval = Column(Integer, default=15)        # minutes
+    show_chart = Column(Boolean, default=True)
+    default_view = Column(String, default="dashboard") # 'dashboard' | 'holdings'
+
+    # Notification Preferences
+    notify_email = Column(Boolean, default=False)
+    notify_price_alerts = Column(Boolean, default=True)
+    notify_sync_complete = Column(Boolean, default=False)
+    notify_daily_summary = Column(Boolean, default=False)
+    notify_milestones = Column(Boolean, default=True)
+
+    user = relationship("User", back_populates="preferences")

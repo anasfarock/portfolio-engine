@@ -91,6 +91,26 @@ class TransactionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserPreferencesBase(BaseModel):
+    currency: str = "USD"
+    sync_interval: int = 15
+    show_chart: bool = True
+    default_view: str = "dashboard"
+    notify_email: bool = False
+    notify_price_alerts: bool = True
+    notify_sync_complete: bool = False
+    notify_daily_summary: bool = False
+    notify_milestones: bool = True
+
+class UserPreferencesUpdate(UserPreferencesBase):
+    pass
+
+class UserPreferencesResponse(UserPreferencesBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
+
 class PortfolioSummary(BaseModel):
     total_capital: float
     total_value: float

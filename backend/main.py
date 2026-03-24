@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -253,6 +254,149 @@ def delete_avatar(
         db.refresh(current_user)
         
     return current_user
+
+@app.get("/users/me/preferences", response_model=schemas.UserPreferencesResponse)
+def get_preferences(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == current_user.id).first()
+    if not pref:
+        # Create default preferences lazily if they don't exist
+        pref = models.UserPreferences(user_id=current_user.id)
+        db.add(pref)
+        db.commit()
+        db.refresh(pref)
+    return pref
+
+@app.put("/users/me/preferences", response_model=schemas.UserPreferencesResponse)
+def update_preferences(
+    payload: schemas.UserPreferencesUpdate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == current_user.id).first()
+    if not pref:
+        pref = models.UserPreferences(user_id=current_user.id)
+        db.add(pref)
+    
+    # Update fields
+    for k, v in payload.dict(exclude_unset=True).items():
+        setattr(pref, k, v)
+        
+    db.commit()
+    db.refresh(pref)
+    return pref
+
+@app.get("/users/me/export")
+def export_user_data(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
+    txs = db.query(models.Transaction).filter(models.Transaction.user_id == current_user.id).order_by(models.Transaction.timestamp.desc()).all()
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == current_user.id).first()
+    
+    data = {
+        "user": {
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+            "mfa_enabled": current_user.mfa_enabled
+        },
+        "preferences": {
+            "currency": pref.currency if pref else "USD",
+            "sync_interval": pref.sync_interval if pref else 15,
+            "show_chart": pref.show_chart if pref else True,
+            "default_view": pref.default_view if pref else "dashboard",
+            "notify_email": pref.notify_email if pref else False,
+            "notify_price_alerts": pref.notify_price_alerts if pref else True,
+            "notify_sync_complete": pref.notify_sync_complete if pref else False,
+            "notify_daily_summary": pref.notify_daily_summary if pref else False,
+            "notify_milestones": pref.notify_milestones if pref else True
+        },
+        "assets": [
+            {
+                "symbol": a.symbol,
+                "asset_class": a.asset_class,
+                "quantity": a.quantity,
+                "average_buy_price": a.average_buy_price,
+                "current_price": a.current_price,
+                "pnl": a.pnl,
+                "pnl_percent": a.pnl_percent,
+                "broker_name": a.broker_name
+            } for a in assets
+        ],
+        "transactions": [
+            {
+                "symbol": t.symbol,
+                "transaction_type": t.transaction_type,
+                "quantity": t.quantity,
+                "price": t.price,
+                "broker_name": t.broker_name,
+                "asset_class": t.asset_class,
+                "timestamp": t.timestamp.isoformat() if t.timestamp else None
+            } for t in txs
+        ]
+    }
+    
+    import datetime as dt
+    date_str = dt.datetime.utcnow().strftime("%Y%m%d")
+    return JSONResponse(
+        content=data,
+        headers={"Content-Disposition": f"attachment; filename=spa_portfolio_export_{date_str}.json"}
+    )
+
+@app.get("/users/me/export/pdf")
+def export_user_data_pdf(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    from pdf_export import generate_portfolio_pdf
+    from fastapi.responses import StreamingResponse
+    import datetime as dt
+    
+    assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
+    txs = db.query(models.Transaction).filter(models.Transaction.user_id == current_user.id).order_by(models.Transaction.timestamp.desc()).all()
+    creds = db.query(models.BrokerCredential).filter(models.BrokerCredential.user_id == current_user.id).all()
+    
+    total_val = 0.0
+    total_cost = 0.0
+    total_capital = 0.0
+    for c in creds:
+        if c.total_capital: total_capital += float(c.total_capital)
+    for a in assets:
+        qty = float(a.quantity) if a.quantity else 0.0
+        buy_p = float(a.average_buy_price) if a.average_buy_price else 0.0
+        cur_p = float(a.current_price) if a.current_price else 0.0
+        total_cost += qty * buy_p
+        total_val += qty * cur_p
+    
+    day_abs = total_val - total_cost
+    day_perc = (day_abs / total_cost * 100) if total_cost > 0 else 0.0
+    
+    summary = {
+        "total_capital": total_capital,
+        "total_value": total_val,
+        "day_return_perc": day_perc,
+        "day_return_abs": day_abs,
+        "active_positions": len(assets)
+    }
+    
+    pdf_buffer = generate_portfolio_pdf(
+        user_name=current_user.full_name or "User",
+        user_email=current_user.email,
+        summary_data=summary,
+        assets=assets,
+        transactions=txs
+    )
+    
+    date_str = dt.datetime.utcnow().strftime("%Y%m%d")
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=spa_portfolio_export_{date_str}.pdf"}
+    )
 
 from routers import brokers, portfolio
 

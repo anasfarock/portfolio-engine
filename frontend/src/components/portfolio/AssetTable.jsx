@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
-export default function AssetTable({ assets, loading, onDelete }) {
+export default function AssetTable({ assets, loading, onDelete, currencySymbol = '$' }) {
     if (loading) {
         return (
             <div className="flex justify-center items-center py-12 text-gray-500 dark:text-gray-400">
@@ -29,13 +29,14 @@ export default function AssetTable({ assets, loading, onDelete }) {
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-gray-50/50 dark:bg-[#141414]/50 border-b border-gray-100 dark:border-gray-800">
-                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Asset</th>
-                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Class</th>
+                    <tr className="bg-gray-50/50 dark:bg-[#1a1a1a]">
+                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left rounded-tl-xl border-l-4 border-transparent">Asset</th>
+                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left">Type</th>
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Qty</th>
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Avg Entry</th>
                         <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Current Price</th>
-                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">P/L %</th>
+                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Total Value</th>
+                        <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right rounded-tr-xl">Unrealized PNL</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
@@ -44,9 +45,10 @@ export default function AssetTable({ assets, loading, onDelete }) {
                         const buyPrice = parseFloat(asset.average_buy_price);
                         const currentPrice = asset.current_price ? parseFloat(asset.current_price) : buyPrice;
 
-                        const profitLoss = asset.pnl ? parseFloat(asset.pnl) : (currentPrice - buyPrice);
+                        const profitLoss = asset.pnl ? parseFloat(asset.pnl) : (currentPrice - buyPrice)*qty;
                         const profitLossPerc = asset.pnl_percent ? parseFloat(asset.pnl_percent) : (buyPrice > 0 ? (profitLoss / buyPrice) * 100 : 0);
                         const isPositive = profitLoss >= 0;
+                        const totalValue = qty * currentPrice;
 
                         return (
                             <tr key={asset.id} className="hover:bg-gray-50/30 dark:hover:bg-gray-800/30 transition-colors">
@@ -68,16 +70,19 @@ export default function AssetTable({ assets, loading, onDelete }) {
                                 <td className="px-6 py-4 text-right font-medium text-gray-900 dark:text-gray-200">
                                     {qty.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                                 </td>
-                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-400">
-                                    ${buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                                <td className="px-6 py-4 text-right font-medium text-gray-700 dark:text-gray-300">
+                                    {currencySymbol}{buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                 </td>
-                                <td className="px-6 py-4 text-right font-medium text-gray-900 dark:text-white">
-                                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                                <td className="px-6 py-4 text-right font-medium text-gray-700 dark:text-gray-300">
+                                    {currencySymbol}{currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className={`inline-flex items-center gap-1 font-semibold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                                        {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                                        <span>{Math.abs(profitLossPerc).toFixed(2)}%</span>
+                                <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">
+                                    {currencySymbol}{totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                                <td className={`px-6 py-4 text-right font-semibold flex flex-col items-end justify-center h-full ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    <div className="flex items-center gap-1">
+                                        {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                        <span>{isPositive ? '+' : ''}{currencySymbol}{Math.abs(profitLoss).toLocaleString()}</span>
                                     </div>
                                 </td>
                             </tr>

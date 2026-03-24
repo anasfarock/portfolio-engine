@@ -20,10 +20,10 @@ function formatDate(iso) {
     } catch { return iso; }
 }
 
-function formatMoney(val) {
+function formatMoney(val, sym = '$') {
     const n = parseFloat(val);
     if (isNaN(n)) return '—';
-    return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+    return sym + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
 }
 
 function formatQty(val) {
@@ -34,7 +34,7 @@ function formatQty(val) {
 
 const PAGE_SIZE = 15;
 
-export default function TradeHistory({ transactions = [], loading }) {
+export default function TradeHistory({ transactions = [], loading, currencySymbol = '$' }) {
     const [page, setPage] = useState(0);
     const [filter, setFilter] = useState('ALL');  // ALL | BUY | SELL
 
@@ -131,12 +131,12 @@ export default function TradeHistory({ transactions = [], loading }) {
 
                                     {/* Price */}
                                     <td className="px-4 py-3 text-right font-mono text-gray-700 dark:text-gray-300">
-                                        {formatMoney(tx.price)}
+                                        {formatMoney(tx.price, currencySymbol)}
                                     </td>
 
                                     {/* Total Value */}
                                     <td className="px-4 py-3 text-right font-mono font-semibold text-gray-900 dark:text-white">
-                                        {formatMoney(total)}
+                                        {formatMoney(total, currencySymbol)}
                                     </td>
 
                                     {/* Broker */}

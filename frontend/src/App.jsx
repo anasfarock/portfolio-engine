@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ApiKeys from './pages/ApiKeys';
+import Settings from './pages/Settings'; // Added import for Settings
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
@@ -45,6 +46,12 @@ function Dashboard() {
   const [credentials, setCredentials] = useState([]);
   const [selectedBrokers, setSelectedBrokers] = useState(['ALL']);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const [prefs, setPrefs] = useState({
+    currency: 'USD',
+    sync_interval: 15, // seconds
+    default_view: 'dashboard'
+  });
 
   const fetchDashboardData = useCallback(async (isBackground = false) => {
     try {
@@ -57,15 +64,19 @@ function Dashboard() {
         console.error("Auto-sync background pipeline failed: ", syncErr);
       }
 
-      const [summaryRes, assetsRes, txRes] = await Promise.all([
+      const [summaryRes, assetsRes, txRes, prefsRes] = await Promise.all([
         axios.get('http://localhost:8000/portfolio/summary', { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('http://localhost:8000/portfolio/assets', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:8000/portfolio/transactions', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get('http://localhost:8000/portfolio/transactions', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://localhost:8000/users/me/preferences', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: {} }))
       ]);
 
       setSummary(summaryRes.data);
       setAssets(assetsRes.data);
       setTransactions(txRes.data);
+      if (prefsRes.data && prefsRes.data.currency) {
+          setPrefs(prefsRes.data);
+      }
 
       // Fetch credentials to build the broker filter options
       try {
@@ -79,22 +90,24 @@ function Dashboard() {
     }
   }, [token]);
 
+  // Initial load
+  // Initial load
   useEffect(() => {
-    let pollingInterval;
-    if (token) {
-      // Intial boot up load
-      fetchDashboardData();
-
-      // Real-time market data streaming (15 seconds)
-      pollingInterval = setInterval(() => {
-        fetchDashboardData(true);
-      }, 15000);
-    }
-
-    return () => {
-      if (pollingInterval) clearInterval(pollingInterval);
-    };
+    if (token) fetchDashboardData();
   }, [token, fetchDashboardData]);
+
+  // Dynamic Polling Interval based on preferences
+  useEffect(() => {
+    if (!token) return;
+    
+    // Convert prefs.sync_interval (seconds) to milliseconds
+    const intervalMs = (prefs.sync_interval || 15) * 1000;
+    const pollingInterval = setInterval(() => {
+      fetchDashboardData(true);
+    }, intervalMs);
+
+    return () => clearInterval(pollingInterval);
+  }, [token, fetchDashboardData, prefs.sync_interval]);
 
   const handleDeleteAsset = async (assetId) => {
     if (!window.confirm("Are you sure you want to remove this position?")) return;
@@ -239,32 +252,34 @@ function Dashboard() {
       <div className="absolute top-20 right-0 w-72 h-72 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob pointer-events-none dark:hidden"></div>
       <div className="absolute bottom-20 left-0 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000 dark:hidden pointer-events-none"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-panel p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Total Capital</h3>
-          <p className="text-3xl font-black text-green-600 dark:text-green-400 mt-2">
-            ${loading ? "..." : (filteredSummary.total_capital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
+      {prefs.default_view !== 'holdings' && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="glass-panel p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Total Capital</h3>
+            <p className="text-3xl font-black text-green-600 dark:text-green-400 mt-2">
+              ${loading ? "..." : (filteredSummary.total_capital || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="glass-panel p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assets Value</h3>
+            <p className="text-3xl font-black text-primary-600 mt-2">
+              ${loading ? "..." : (filteredSummary?.total_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="glass-panel p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Active Positions</h3>
+            <p className="text-3xl font-black text-indigo-600 mt-2">{loading ? "..." : filteredSummary.active_positions}</p>
+          </div>
+          <div className="glass-panel p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">24h Return</h3>
+            <p className={`text-3xl font-black mt-2 ${filteredSummary.day_return_perc >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {loading ? "..." : `${filteredSummary.day_return_perc > 0 ? '+' : ''}${filteredSummary.day_return_perc.toFixed(2)}%`}
+            </p>
+          </div>
         </div>
-        <div className="glass-panel p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assets Value</h3>
-          <p className="text-3xl font-black text-primary-600 mt-2">
-            ${loading ? "..." : filteredSummary.total_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
-        <div className="glass-panel p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Active Positions</h3>
-          <p className="text-3xl font-black text-indigo-600 mt-2">{loading ? "..." : filteredSummary.active_positions}</p>
-        </div>
-        <div className="glass-panel p-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">24h Return</h3>
-          <p className={`text-3xl font-black mt-2 ${filteredSummary.day_return_perc >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {loading ? "..." : `${filteredSummary.day_return_perc > 0 ? '+' : ''}${filteredSummary.day_return_perc.toFixed(2)}%`}
-          </p>
-        </div>
-      </div>
+      )}
 
-      <div className="mt-8">
+      <div className={`mt-8 ${prefs.default_view === 'holdings' ? 'pt-4' : ''}`}>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Current Holdings</h2>
         <GlassPanel className="overflow-hidden">
           <AssetTable
@@ -275,15 +290,17 @@ function Dashboard() {
         </GlassPanel>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Trade History</h2>
-        <GlassPanel className="overflow-hidden">
-          <TradeHistory
-            transactions={filteredTransactions}
-            loading={loading}
-          />
-        </GlassPanel>
-      </div>
+      {prefs.default_view !== 'holdings' && (
+        <div className="mt-8 relative z-0">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Trade History</h2>
+          <GlassPanel className="overflow-hidden relative z-0">
+            <TradeHistory
+              transactions={filteredTransactions}
+              loading={loading}
+            />
+          </GlassPanel>
+        </div>
+      )}
     </div>
   );
 }
@@ -304,10 +321,10 @@ function App() {
               <ProtectedLayout />
             </ProtectedRoute>
           }>
-            {/* These routes render inside the <Outlet /> of ProtectedLayout */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/api-keys" element={<ApiKeys />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </Router>
