@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import ApiKeys from './pages/ApiKeys';
 import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
+import ChangePassword from './pages/ChangePassword';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
@@ -330,6 +331,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/api-keys" element={<ApiKeys />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/change-password" element={<ChangePassword />} />
           </Route>
         </Routes>
       </Router>

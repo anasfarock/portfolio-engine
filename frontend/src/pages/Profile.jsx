@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, Mail, Save, AlertCircle, CheckCircle2, Camera, Loader2, Trash2, ShieldCheck, ShieldOff } from 'lucide-react';
@@ -11,36 +12,21 @@ export default function Profile() {
     const { user, refetchUser, token } = useAuth();
 
     const [fullName, setFullName] = useState(user?.full_name || '');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url || null);
-
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
-    const [mfaLoading, setMfaLoading] = useState(false);
-    const [mfaMessage, setMfaMessage] = useState({ type: '', text: '' });
+    
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage({ type: '', text: '' });
 
-        if (newPassword && newPassword.length < 6) {
-            setMessage({ type: 'error', text: 'New password must be at least 6 characters' });
-            return;
-        }
-
-        if (newPassword && newPassword !== confirmPassword) {
-            setMessage({ type: 'error', text: 'Passwords do not match' });
-            return;
-        }
-
         setLoading(true);
         try {
             const updateData = {};
             if (fullName !== user?.full_name) updateData.full_name = fullName;
-            if (newPassword) updateData.password = newPassword;
 
             if (Object.keys(updateData).length === 0 && !avatarFile) {
                 setMessage({ type: 'info', text: 'No changes made' });
@@ -69,8 +55,6 @@ export default function Profile() {
             await refetchUser();
 
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
-            setNewPassword('');
-            setConfirmPassword('');
 
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.detail || 'Failed to update profile' });
@@ -123,25 +107,7 @@ export default function Profile() {
         }
     };
 
-    const handleToggleMfa = async () => {
-        setMfaMessage({ type: '', text: '' });
-        setMfaLoading(true);
-        try {
-            await axios.put('http://localhost:8000/users/me/mfa', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            await refetchUser();
-            const nowEnabled = !user?.mfa_enabled;
-            setMfaMessage({
-                type: 'success',
-                text: nowEnabled ? 'MFA enabled — your account is now protected.' : 'MFA disabled.'
-            });
-        } catch {
-            setMfaMessage({ type: 'error', text: 'Failed to toggle MFA. Please try again.' });
-        } finally {
-            setMfaLoading(false);
-        }
-    };
+
 
     return (
         <div className="w-full animate-fade-in">
@@ -260,38 +226,6 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-10 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                                Security
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-9 h-5 w-5 text-gray-400 dark:text-gray-500" />
-                                    <Input
-                                        label="New Password"
-                                        id="newPassword"
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="Leave blank to keep current"
-                                        className="pl-10"
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-9 h-5 w-5 text-gray-400 dark:text-gray-500" />
-                                    <Input
-                                        label="Confirm New Password"
-                                        id="confirmPassword"
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="Leave blank to keep current"
-                                        className="pl-10"
-                                    />
-                                </div>
-                            </div>
-
                             <div className="pt-4 flex justify-end">
                                 <Button type="submit" isLoading={loading} icon={Save} className="w-full sm:w-auto px-8">
                                     Save Changes
@@ -300,51 +234,25 @@ export default function Profile() {
                         </form>
                     </GlassPanel>
 
-                    {/* MFA Toggle Card */}
+                    {/* Security Sub-panel link */}
                     <GlassPanel className="p-6 sm:p-8">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-4">
-                                <div className={`p-2 rounded-lg ${ user?.mfa_enabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-800' }`}>
-                                    {user?.mfa_enabled
-                                        ? <ShieldCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                        : <ShieldOff className="w-6 h-6 text-gray-400" />}
-                                </div>
-                                <div>
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                        Two-Factor Authentication
-                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                            user?.mfa_enabled
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-                                                : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                                        }`}>
-                                            {user?.mfa_enabled ? 'Enabled' : 'Disabled'}
-                                        </span>
-                                    </h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        {user?.mfa_enabled
-                                            ? 'A 6-digit code will be required each time you sign in.'
-                                            : 'Add an extra layer of security to your account with a verification code at login.'}
-                                    </p>
-                                    {mfaMessage.text && (
-                                        <p className={`text-xs mt-2 font-medium ${
-                                            mfaMessage.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-500'
-                                        }`}>
-                                            {mfaMessage.text}
-                                        </p>
-                                    )}
-                                </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1 border-b-0">
+                                    Account Security
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Update your password and login credentials
+                                </p>
                             </div>
-                            <button
-                                onClick={handleToggleMfa}
-                                disabled={mfaLoading}
-                                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                                    user?.mfa_enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                                } disabled:opacity-50`}
+                             <Button 
+                                type="button" 
+                                onClick={() => navigate('/change-password')}
+                                className="!w-auto bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:-translate-y-0"
+                                icon={Lock}
                             >
-                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                                    user?.mfa_enabled ? 'translate-x-6' : 'translate-x-0'
-                                }`} />
-                            </button>
+                                Change Password
+                            </Button>
                         </div>
                     </GlassPanel>
                 </div>
