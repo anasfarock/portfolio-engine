@@ -97,7 +97,7 @@ export default function ApiKeys() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto w-full animate-fade-in">
+        <div className="w-full animate-fade-in">
             <div className="mb-8 flex justify-between items-end">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">API Integrations</h1>

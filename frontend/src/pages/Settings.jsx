@@ -143,7 +143,7 @@ export default function Settings() {
 
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto space-y-8 animate-pulse">
+            <div className="w-full space-y-8 animate-pulse">
                 <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded"></div>
                 <div className="h-64 bg-gray-100 dark:bg-gray-800/50 rounded-2xl"></div>
             </div>
@@ -151,7 +151,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-12">
+        <div className="w-full space-y-8 pb-12">
             <div>
                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
                     <SettingsIcon className="w-8 h-8 text-primary-500" />
