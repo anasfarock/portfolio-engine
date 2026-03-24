@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ThemeToggle from '../ThemeToggle';
 import AvatarDropdown from '../ui/AvatarDropdown';
 import { Activity } from 'lucide-react';
 
@@ -21,10 +20,6 @@ export default function Navbar() {
 
                     {/* Right side navigation items */}
                     <div className="flex items-center gap-4">
-                        <ThemeToggle />
-
-                        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
                         <AvatarDropdown />
                     </div>
 

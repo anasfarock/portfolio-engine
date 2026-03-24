@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings as SettingsIcon, Bell, PieChart, Save, Check, Download, Database, FileText, FileJson } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, PieChart, Save, Check, Download, Database, FileText, FileJson, Sun, Moon, Monitor } from 'lucide-react';
 import GlassPanel from '../components/ui/GlassPanel';
 import Button from '../components/ui/Button';
 
@@ -25,6 +25,26 @@ export default function Settings() {
         notify_daily_summary: false,
         notify_milestones: true
     });
+
+    const [theme, setTheme] = useState(() => localStorage.getItem('color-theme') || 'system');
+
+    const handleThemeChange = (newTheme) => {
+        setTheme(newTheme);
+        localStorage.setItem('color-theme', newTheme);
+        
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else if (newTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            // system
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    };
 
     useEffect(() => {
         const fetchPreferences = async () => {
@@ -188,6 +208,45 @@ export default function Settings() {
                                 <option value="dashboard">Dashboard</option>
                                 <option value="holdings">Holdings Only</option>
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">App Theme</label>
+                            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => handleThemeChange('light')}
+                                    className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                                        theme === 'light' 
+                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' 
+                                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Sun className="w-4 h-4" /> Light
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleThemeChange('dark')}
+                                    className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                                        theme === 'dark' 
+                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' 
+                                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Moon className="w-4 h-4" /> Dark
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleThemeChange('system')}
+                                    className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                                        theme === 'system' 
+                                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' 
+                                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Monitor className="w-4 h-4" /> System
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-between pt-2">
