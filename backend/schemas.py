@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -75,6 +76,18 @@ class AssetResponse(AssetBase):
     id: int
     user_id: int
     
+    class Config:
+        from_attributes = True
+
+class TransactionResponse(BaseModel):
+    id: int
+    symbol: str
+    transaction_type: str
+    quantity: str
+    price: str
+    broker_name: str | None = None
+    asset_class: str | None = None
+    timestamp: datetime
     class Config:
         from_attributes = True
 

@@ -9,6 +9,7 @@ import ApiKeys from './pages/ApiKeys';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
+import TradeHistory from './components/portfolio/TradeHistory';
 import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -39,6 +40,7 @@ function Dashboard() {
     day_return_abs: 0.0
   });
   const [assets, setAssets] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [credentials, setCredentials] = useState([]);
   const [selectedBrokers, setSelectedBrokers] = useState(['ALL']);
@@ -55,13 +57,15 @@ function Dashboard() {
         console.error("Auto-sync background pipeline failed: ", syncErr);
       }
 
-      const [summaryRes, assetsRes] = await Promise.all([
+      const [summaryRes, assetsRes, txRes] = await Promise.all([
         axios.get('http://localhost:8000/portfolio/summary', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:8000/portfolio/assets', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get('http://localhost:8000/portfolio/assets', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://localhost:8000/portfolio/transactions', { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       setSummary(summaryRes.data);
       setAssets(assetsRes.data);
+      setTransactions(txRes.data);
 
       // Fetch credentials to build the broker filter options
       try {
@@ -121,7 +125,11 @@ function Dashboard() {
     });
   };
 
-  // Filter assets based on selection
+  // Filter transactions the same as assets
+  const filteredTransactions = selectedBrokers.includes('ALL')
+    ? transactions
+    : transactions.filter(t => selectedBrokers.includes(t.broker_name));
+
   const filteredAssets = selectedBrokers.includes('ALL')
     ? assets
     : assets.filter(a => selectedBrokers.includes(a.broker_name));
@@ -262,6 +270,16 @@ function Dashboard() {
           <AssetTable
             assets={filteredAssets}
             onDelete={handleDeleteAsset}
+            loading={loading}
+          />
+        </GlassPanel>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Trade History</h2>
+        <GlassPanel className="overflow-hidden">
+          <TradeHistory
+            transactions={filteredTransactions}
             loading={loading}
           />
         </GlassPanel>

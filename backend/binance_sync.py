@@ -110,8 +110,54 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
         # Update credential total capital
         cred.total_capital = str(total_capital)
         db.commit()
-        
+
+        # Fetch Trade History for each active asset from Binance /api/v3/myTrades
+        import datetime as dt
+        for balance in active_balances:
+            asset_sym = balance.get('asset', '')
+            if not asset_sym or asset_sym in ('USDT', 'BUSD', 'USD'):
+                continue
+            trading_pair = f"{asset_sym}USDT"
+            try:
+                ts2 = int(time.time() * 1000)
+                qs2 = f"symbol={trading_pair}&limit=50&timestamp={ts2}"
+                sig2 = generate_signature(qs2, api_secret)
+                trades_url = f"{base_endpoint}/api/v3/myTrades?{qs2}&signature={sig2}"
+                trades_res = requests.get(trades_url, headers=headers, timeout=10)
+                if trades_res.status_code != 200:
+                    continue
+                for trade in trades_res.json():
+                    ext_id = f"binance-{trade['id']}"
+                    exists = db.query(models.Transaction).filter(
+                        models.Transaction.external_id == ext_id,
+                        models.Transaction.user_id == user_id
+                    ).first()
+                    if exists:
+                        continue
+                    tx_type = 'BUY' if trade.get('isBuyer') else 'SELL'
+                    try:
+                        ts_ms = trade.get('time', 0)
+                        tx_ts = dt.datetime.utcfromtimestamp(ts_ms / 1000)
+                    except Exception:
+                        tx_ts = dt.datetime.utcnow()
+                    tx = models.Transaction(
+                        user_id=user_id,
+                        symbol=trading_pair,
+                        transaction_type=tx_type,
+                        quantity=str(trade.get('qty', 0)),
+                        price=str(trade.get('price', 0)),
+                        broker_name="Binance Demo",
+                        asset_class="Crypto",
+                        external_id=ext_id,
+                        timestamp=tx_ts
+                    )
+                    db.add(tx)
+            except Exception as te:
+                print(f"Binance trade history error for {trading_pair}: {te}")
+        db.commit()
+
         return {"status": "success", "message": f"Successfully synchronized {len(active_balances)} crypto balances from Binance."}
+
         
     except requests.exceptions.HTTPError as he:
         print(f"Binance HTTP Error: {he}")

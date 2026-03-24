@@ -73,8 +73,58 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
             db.add(ast)
             
         db.commit()
-        
+
+        # Fetch Order History (last 50 filled orders) for Trade History section
+        try:
+            orders_res = requests.get(
+                f"{base_endpoint}/orders",
+                headers=headers,
+                params={"status": "closed", "limit": 50, "direction": "desc"},
+                timeout=10
+            )
+            if orders_res.status_code == 200:
+                orders_data = orders_res.json()
+                import datetime as dt
+                for order in orders_data:
+                    if order.get('filled_qty') in (None, '0', 0):
+                        continue
+                    ext_id = str(order.get('id', ''))
+                    # Skip if already stored
+                    exists = db.query(models.Transaction).filter(
+                        models.Transaction.external_id == ext_id,
+                        models.Transaction.user_id == user_id
+                    ).first()
+                    if exists:
+                        continue
+                    side = order.get('side', 'buy').upper()
+                    tx_type = 'BUY' if side == 'BUY' else 'SELL'
+                    filled_qty = str(order.get('filled_qty', 0))
+                    filled_price = str(order.get('filled_avg_price', 0))
+                    sym = order.get('symbol', 'UNKNOWN')
+                    ast_class = order.get('asset_class', 'us_equity').replace('_', ' ').title()
+                    raw_ts = order.get('filled_at') or order.get('updated_at')
+                    try:
+                        ts = dt.datetime.fromisoformat(raw_ts.replace('Z', '+00:00')).replace(tzinfo=None)
+                    except Exception:
+                        ts = dt.datetime.utcnow()
+                    tx = models.Transaction(
+                        user_id=user_id,
+                        symbol=sym,
+                        transaction_type=tx_type,
+                        quantity=filled_qty,
+                        price=filled_price,
+                        broker_name="Alpaca",
+                        asset_class=ast_class,
+                        external_id=ext_id,
+                        timestamp=ts
+                    )
+                    db.add(tx)
+                db.commit()
+        except Exception as order_err:
+            print(f"Alpaca order history fetch error: {order_err}")
+
         return {"status": "success", "message": f"Successfully synchronized {len(positions_data)} positions from Alpaca."}
+
         
     except requests.exceptions.HTTPError as he:
         print(f"Alpaca HTTP Error: {he}")

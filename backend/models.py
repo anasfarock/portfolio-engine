@@ -63,6 +63,9 @@ class Transaction(Base):
     transaction_type = Column(String, nullable=False) # 'BUY' or 'SELL'
     quantity = Column(String, nullable=False)
     price = Column(String, nullable=False)
+    broker_name = Column(String, nullable=True)  # 'Alpaca', 'Binance Demo'
+    asset_class = Column(String, nullable=True)
+    external_id = Column(String, nullable=True, index=True)  # broker order id for deduplication
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="transactions")

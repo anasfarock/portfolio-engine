@@ -94,3 +94,18 @@ def get_portfolio_summary(
         day_return_perc=day_return_perc,
         day_return_abs=day_return_abs
     )
+
+@router.get("/transactions", response_model=List[schemas.TransactionResponse])
+def get_transactions(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    """Return the last 100 trade history records for the current user, newest first."""
+    txs = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.user_id == current_user.id)
+        .order_by(models.Transaction.timestamp.desc())
+        .limit(100)
+        .all()
+    )
+    return txs
