@@ -39,16 +39,34 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:8000/login', {
-                email,
-                password
-            });
+            const response = await axios.post('http://localhost:8000/login', { email, password });
+            const data = response.data;
+
+            // MFA required — return temp token to Login.jsx for the code step
+            if (data.mfa_required) {
+                return { success: false, mfa_required: true, temp_token: data.temp_token };
+            }
+
+            localStorage.setItem('access_token', data.access_token);
+            setToken(data.access_token);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.detail || 'Login failed' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const verifyMfa = async (temp_token, code) => {
+        setLoading(true);
+        try {
+            const response = await axios.post('http://localhost:8000/mfa/verify', { temp_token, code });
             const { access_token } = response.data;
             localStorage.setItem('access_token', access_token);
             setToken(access_token);
             return { success: true };
         } catch (error) {
-            return { success: false, error: error.response?.data?.detail || 'Login failed' };
+            return { success: false, error: error.response?.data?.detail || 'Invalid code' };
         } finally {
             setLoading(false);
         }
@@ -77,7 +95,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, loading, refetchUser: fetchUser }}>
+        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, logout, loading, refetchUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

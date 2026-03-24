@@ -61,7 +61,7 @@ def register_user(user: schemas.UserCreate, db: db_dependency):
     db.refresh(new_user)
     return new_user
 
-@app.post("/login", response_model=schemas.Token)
+@app.post("/login")
 def login_user(user: schemas.UserLogin, db: db_dependency):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if not db_user or not auth.verify_password(user.password, db_user.hashed_password):
@@ -70,11 +70,17 @@ def login_user(user: schemas.UserLogin, db: db_dependency):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    access_token = auth.create_access_token(
-        data={"sub": db_user.email}
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    # If MFA is enabled, return a short-lived temp token instead of a full session token
+    if db_user.mfa_enabled:
+        temp_token = auth.create_access_token(
+            data={"sub": db_user.email, "mfa_pending": True},
+            expires_minutes=5
+        )
+        return {"mfa_required": True, "temp_token": temp_token}
+
+    access_token = auth.create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -116,6 +122,45 @@ def update_user_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@app.put("/users/me/mfa", response_model=schemas.UserResponse)
+def toggle_mfa(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    """Toggle MFA on or off for the current user."""
+    current_user.mfa_enabled = not current_user.mfa_enabled
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@app.post("/mfa/verify")
+def verify_mfa(payload: schemas.MfaVerify, db: db_dependency):
+    """
+    Verify the MFA code submitted after login.
+    In dev mode: any 6-digit numeric code is accepted.
+    In production: this would validate a TOTP code.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired session. Please log in again."
+    )
+    try:
+        token_data = jwt.decode(payload.temp_token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        email = token_data.get("sub")
+        is_mfa_pending = token_data.get("mfa_pending", False)
+        if not email or not is_mfa_pending:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    # Dev-mode: accept any 6-digit code
+    if not payload.code.strip().isdigit() or len(payload.code.strip()) != 6:
+        raise HTTPException(status_code=400, detail="Invalid code. Please enter a 6-digit code.")
+
+    # Issue the real full-session access token
+    access_token = auth.create_access_token(data={"sub": email})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/users/me/avatar", response_model=schemas.UserResponse)
 async def upload_avatar(

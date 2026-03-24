@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Lock, Mail, Save, AlertCircle, CheckCircle2, Camera, Loader2, Trash2 } from 'lucide-react';
+import { User, Lock, Mail, Save, AlertCircle, CheckCircle2, Camera, Loader2, Trash2, ShieldCheck, ShieldOff } from 'lucide-react';
 
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -19,6 +19,8 @@ export default function Profile() {
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [mfaLoading, setMfaLoading] = useState(false);
+    const [mfaMessage, setMfaMessage] = useState({ type: '', text: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -118,6 +120,26 @@ export default function Profile() {
             setMessage({ type: 'error', text: 'Failed to remove avatar' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleMfa = async () => {
+        setMfaMessage({ type: '', text: '' });
+        setMfaLoading(true);
+        try {
+            await axios.put('http://localhost:8000/users/me/mfa', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            await refetchUser();
+            const nowEnabled = !user?.mfa_enabled;
+            setMfaMessage({
+                type: 'success',
+                text: nowEnabled ? 'MFA enabled — your account is now protected.' : 'MFA disabled.'
+            });
+        } catch {
+            setMfaMessage({ type: 'error', text: 'Failed to toggle MFA. Please try again.' });
+        } finally {
+            setMfaLoading(false);
         }
     };
 
@@ -276,6 +298,54 @@ export default function Profile() {
                                 </Button>
                             </div>
                         </form>
+                    </GlassPanel>
+
+                    {/* MFA Toggle Card */}
+                    <GlassPanel className="p-6 sm:p-8">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4">
+                                <div className={`p-2 rounded-lg ${ user?.mfa_enabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-800' }`}>
+                                    {user?.mfa_enabled
+                                        ? <ShieldCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                        : <ShieldOff className="w-6 h-6 text-gray-400" />}
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        Two-Factor Authentication
+                                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                            user?.mfa_enabled
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                                                : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                                        }`}>
+                                            {user?.mfa_enabled ? 'Enabled' : 'Disabled'}
+                                        </span>
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {user?.mfa_enabled
+                                            ? 'A 6-digit code will be required each time you sign in.'
+                                            : 'Add an extra layer of security to your account with a verification code at login.'}
+                                    </p>
+                                    {mfaMessage.text && (
+                                        <p className={`text-xs mt-2 font-medium ${
+                                            mfaMessage.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-500'
+                                        }`}>
+                                            {mfaMessage.text}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleToggleMfa}
+                                disabled={mfaLoading}
+                                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                                    user?.mfa_enabled ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+                                } disabled:opacity-50`}
+                            >
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                                    user?.mfa_enabled ? 'translate-x-6' : 'translate-x-0'
+                                }`} />
+                            </button>
+                        </div>
                     </GlassPanel>
                 </div>
 

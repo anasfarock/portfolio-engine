@@ -15,6 +15,7 @@ class UserResponse(BaseModel):
     full_name: str | None = None
     avatar_url: str | None = None
     is_active: bool
+    mfa_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -26,6 +27,10 @@ class Token(BaseModel):
 class UserUpdate(BaseModel):
     full_name: str | None = None
     password: str | None = None
+
+class MfaVerify(BaseModel):
+    temp_token: str
+    code: str
 
 # Broker Schemas
 class BrokerCredentialBase(BaseModel):
