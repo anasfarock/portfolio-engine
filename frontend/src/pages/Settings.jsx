@@ -33,6 +33,7 @@ export default function Settings() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setPrefs(res.data);
+                localStorage.setItem('portfolio_prefs', JSON.stringify(res.data));
             } catch (err) {
                 console.error('Failed to load preferences', err);
                 setError('Failed to load preferences');
@@ -60,10 +61,10 @@ export default function Settings() {
                 ...prefs,
                 sync_interval: parseInt(prefs.sync_interval)
             };
-            const res = await axios.put('http://localhost:8000/users/me/preferences', payload, {
+            await axios.put('http://localhost:8000/users/me/preferences', payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setPrefs(res.data);
+            localStorage.setItem('portfolio_prefs', JSON.stringify(payload));
             setSuccess('Preferences saved successfully!');
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {

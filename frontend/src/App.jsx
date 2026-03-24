@@ -47,10 +47,12 @@ function Dashboard() {
   const [selectedBrokers, setSelectedBrokers] = useState(['ALL']);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   
-  const [prefs, setPrefs] = useState({
-    currency: 'USD',
-    sync_interval: 15, // seconds
-    default_view: 'dashboard'
+  const [prefs, setPrefs] = useState(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_prefs');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return { sync_interval: 15, default_view: 'dashboard' };
   });
 
   const fetchDashboardData = useCallback(async (isBackground = false) => {
@@ -74,8 +76,9 @@ function Dashboard() {
       setSummary(summaryRes.data);
       setAssets(assetsRes.data);
       setTransactions(txRes.data);
-      if (prefsRes.data && prefsRes.data.currency) {
+      if (prefsRes.data && prefsRes.data.default_view) {
           setPrefs(prefsRes.data);
+          localStorage.setItem('portfolio_prefs', JSON.stringify(prefsRes.data));
       }
 
       // Fetch credentials to build the broker filter options
