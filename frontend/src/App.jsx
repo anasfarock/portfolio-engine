@@ -6,7 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import ApiKeys from './pages/ApiKeys';
-import Settings from './pages/Settings'; // Added import for Settings
+import Settings from './pages/Settings';
+import ForgotPassword from './pages/ForgotPassword';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
@@ -317,6 +318,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected Routes Wrapper */}
           <Route element={
