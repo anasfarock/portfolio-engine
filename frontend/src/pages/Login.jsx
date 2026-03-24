@@ -274,7 +274,7 @@ export default function Login() {
                 <LogIn className="w-12 h-12" />
             </div>
             <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Welcome back</h2>
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">Sign in to your SPAI Engine</p>
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">Sign in to your SPAIE</p>
 
             <GlassPanel>
                 <form className="space-y-6" onSubmit={handleSubmit}>

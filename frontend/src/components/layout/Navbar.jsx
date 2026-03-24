@@ -14,7 +14,7 @@ export default function Navbar() {
                     <div className="flex">
                         <Link to="/dashboard" className="flex-shrink-0 flex items-center gap-2 group">
                             <span className="font-bold text-xl text-gray-900 dark:text-white hidden sm:block font-['Courier_New',monospace]">
-                                SPAI Engine
+                                SPAIE
                             </span>
                         </Link>
                     </div>
