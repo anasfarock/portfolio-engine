@@ -43,6 +43,7 @@ class ResetPasswordRequest(BaseModel):
 # Broker Schemas
 class BrokerCredentialBase(BaseModel):
     broker_name: str
+    nickname: str | None = None
     api_key: str
     identifier: str | None = None
     endpoint: str | None = None
@@ -68,6 +69,8 @@ class AssetBase(BaseModel):
     pnl: str | None = None
     pnl_percent: str | None = None
     broker_name: str | None = None
+    credential_id: int | None = None
+    account_nickname: str | None = None
 
 class AssetCreate(AssetBase):
     pass
@@ -86,6 +89,8 @@ class TransactionResponse(BaseModel):
     quantity: str
     price: str
     broker_name: str | None = None
+    credential_id: int | None = None
+    account_nickname: str | None = None
     asset_class: str | None = None
     timestamp: datetime
     class Config:

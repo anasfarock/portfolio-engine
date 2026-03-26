@@ -41,8 +41,11 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
         positions_res.raise_for_status()
         positions_data = positions_res.json()
         
-        # Clear old assets from this user
-        db.query(models.Asset).filter(models.Asset.user_id == user_id).delete()
+        # Clear old assets from this SPECIFIC credential
+        db.query(models.Asset).filter(
+            models.Asset.user_id == user_id,
+            models.Asset.credential_id == credential_id
+        ).delete()
         
         # Parse Alpaca Response
         for p in positions_data:
@@ -68,7 +71,8 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
                 current_price=current,
                 pnl=p_nl,
                 pnl_percent=p_nl_percent,
-                broker_name="Alpaca"
+                broker_name="Alpaca",
+                credential_id=credential_id
             )
             db.add(ast)
             
@@ -114,6 +118,7 @@ def sync_alpaca_account(credential_id: int, user_id: int, db: Session) -> dict:
                         quantity=filled_qty,
                         price=filled_price,
                         broker_name="Alpaca",
+                        credential_id=credential_id,
                         asset_class=ast_class,
                         external_id=ext_id,
                         timestamp=ts

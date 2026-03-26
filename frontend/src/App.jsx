@@ -130,15 +130,16 @@ function Dashboard() {
   // Derive unique broker names from credentials for the filter
   const brokerOptions = [...new Set(credentials.map(c => c.broker_name))];
 
-  const toggleBroker = (name) => {
-    if (name === 'ALL') {
+  // Use credential IDs for filtering instead of broker names
+  const toggleBroker = (id) => {
+    if (id === 'ALL') {
       setSelectedBrokers(['ALL']);
       return;
     }
     setSelectedBrokers(prev => {
       const withoutAll = prev.filter(b => b !== 'ALL');
-      const already = withoutAll.includes(name);
-      const next = already ? withoutAll.filter(b => b !== name) : [...withoutAll, name];
+      const already = withoutAll.includes(id);
+      const next = already ? withoutAll.filter(b => b !== id) : [...withoutAll, id];
       return next.length === 0 ? ['ALL'] : next;
     });
   };
@@ -146,11 +147,11 @@ function Dashboard() {
   // Filter transactions the same as assets
   const filteredTransactions = selectedBrokers.includes('ALL')
     ? transactions
-    : transactions.filter(t => selectedBrokers.includes(t.broker_name));
+    : transactions.filter(t => selectedBrokers.includes(t.credential_id));
 
   const filteredAssets = selectedBrokers.includes('ALL')
     ? assets
-    : assets.filter(a => selectedBrokers.includes(a.broker_name));
+    : assets.filter(a => selectedBrokers.includes(a.credential_id));
 
   // Label for the dropdown trigger button
   const filterLabel = selectedBrokers.includes('ALL') ? 'All Accounts' : `${selectedBrokers.length} Account${selectedBrokers.length > 1 ? 's' : ''}`;
@@ -161,7 +162,7 @@ function Dashboard() {
 
     // Total Capital: sum total_capital from only the matching credentials
     const filteredCapital = credentials
-      .filter(c => selectedBrokers.includes(c.broker_name))
+      .filter(c => selectedBrokers.includes(c.id))
       .reduce((sum, c) => sum + parseFloat(c.total_capital || 0), 0);
 
     // Assets Value: sum (qty * current_price) for filtered assets
@@ -222,16 +223,23 @@ function Dashboard() {
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-200">All Accounts</span>
                     </label>
                     <div className="border-t border-gray-100 dark:border-gray-800" />
-                    {brokerOptions.map(broker => (
-                      <label key={broker} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer">
+                    {credentials.map(cred => (
+                      <label key={cred.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={selectedBrokers.includes(broker)}
-                          onChange={() => toggleBroker(broker)}
+                          checked={selectedBrokers.includes(cred.id)}
+                          onChange={() => toggleBroker(cred.id)}
                           className="accent-primary-600 w-4 h-4"
                         />
-                        <div>
-                          <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{broker}</div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            {cred.nickname || cred.broker_name}
+                          </span>
+                          {cred.nickname && (
+                            <span className="text-[10px] text-gray-500 uppercase tracking-tighter">
+                              {cred.broker_name}
+                            </span>
+                          )}
                         </div>
                       </label>
                     ))}

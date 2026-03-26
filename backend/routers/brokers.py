@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
 import models, schemas, encryption, database, alpaca_sync, binance_sync
-from main import get_current_user
+from auth import get_current_user, db_dependency
 
 router = APIRouter(
     prefix="/brokers",
@@ -23,6 +23,7 @@ def create_broker_credential(
     new_cred = models.BrokerCredential(
         user_id=current_user.id,
         broker_name=credential.broker_name,
+        nickname=credential.nickname,
         api_key=credential.api_key,
         identifier=credential.identifier,
         endpoint=credential.endpoint,
@@ -38,6 +39,7 @@ def create_broker_credential(
         id=new_cred.id,
         user_id=new_cred.user_id,
         broker_name=new_cred.broker_name,
+        nickname=new_cred.nickname,
         api_key=f"****{new_cred.api_key[-4:]}" if len(new_cred.api_key) > 4 else "****",
         identifier=new_cred.identifier,
         endpoint=new_cred.endpoint

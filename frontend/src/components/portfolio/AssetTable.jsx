@@ -59,6 +59,9 @@ export default function AssetTable({ assets, loading, onDelete, currencySymbol =
                                         </div>
                                         <div>
                                             <div className="font-bold text-gray-900 dark:text-white uppercase">{asset.symbol}</div>
+                                            <div className="text-[10px] text-gray-400 font-medium uppercase truncate max-w-[80px]">
+                                                {asset.account_nickname || asset.broker_name}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

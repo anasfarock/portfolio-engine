@@ -69,7 +69,7 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
         
         db.query(models.Asset).filter(
             models.Asset.user_id == user_id, 
-            models.Asset.asset_class == 'Crypto'
+            models.Asset.credential_id == credential_id
         ).delete()
 
         total_capital = 0.0
@@ -103,7 +103,8 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                 current_price=str(current_price),
                 pnl="0",
                 pnl_percent="0",
-                broker_name="Binance Demo"
+                broker_name="Binance Demo",
+                credential_id=credential_id
             )
             db.add(ast)
             
@@ -147,6 +148,7 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                         quantity=str(trade.get('qty', 0)),
                         price=str(trade.get('price', 0)),
                         broker_name="Binance Demo",
+                        credential_id=credential_id,
                         asset_class="Crypto",
                         external_id=ext_id,
                         timestamp=tx_ts

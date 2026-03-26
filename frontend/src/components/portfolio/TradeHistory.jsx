@@ -141,9 +141,9 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
 
                                     {/* Broker */}
                                     <td className="px-4 py-3">
-                                        {tx.broker_name && (
+                                        {(tx.account_nickname || tx.broker_name) && (
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${BROKER_STYLES[tx.broker_name] || 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                                                {tx.broker_name}
+                                                {tx.account_nickname || tx.broker_name}
                                             </span>
                                         )}
                                     </td>

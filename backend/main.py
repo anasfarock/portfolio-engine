@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
 import models, schemas, auth, database
+from auth import get_db, get_current_user, db_dependency
 import os
 import shutil
 import time
@@ -35,16 +36,9 @@ app.add_middleware(
 os.makedirs("static/avatars", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Database Dependency
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Dependencies moved to dependencies.py
 
-db_dependency = Annotated[Session, Depends(get_db)]
-
+# Routes and Middleware continue...
 @app.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: db_dependency):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -82,27 +76,6 @@ def login_user(user: schemas.UserLogin, db: db_dependency):
 
     access_token = auth.create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    return user
 
 @app.get("/users/me", response_model=schemas.UserResponse)
 def read_users_me(current_user: Annotated[models.User, Depends(get_current_user)]):

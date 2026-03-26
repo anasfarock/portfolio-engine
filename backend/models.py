@@ -29,6 +29,7 @@ class BrokerCredential(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     broker_name = Column(String, nullable=False)
+    nickname = Column(String, nullable=True)
     api_key = Column(String, nullable=False)
     identifier = Column(String, nullable=True) # E.g. account id or email
     endpoint = Column(String, nullable=True) # Manual base URL provided by user
@@ -51,6 +52,7 @@ class Asset(Base):
     pnl = Column(String, nullable=True)
     pnl_percent = Column(String, nullable=True)
     broker_name = Column(String, nullable=True)  # 'Alpaca', 'Binance Demo', etc.
+    credential_id = Column(Integer, ForeignKey("broker_credentials.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="assets")
@@ -65,6 +67,7 @@ class Transaction(Base):
     quantity = Column(String, nullable=False)
     price = Column(String, nullable=False)
     broker_name = Column(String, nullable=True)  # 'Alpaca', 'Binance Demo'
+    credential_id = Column(Integer, ForeignKey("broker_credentials.id"), nullable=True)
     asset_class = Column(String, nullable=True)
     external_id = Column(String, nullable=True, index=True)  # broker order id for deduplication
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)

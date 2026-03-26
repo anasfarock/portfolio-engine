@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
 import models, schemas, database, alpaca_sync, binance_sync
-from main import get_current_user
+from auth import get_current_user, db_dependency
+from fastapi import APIRouter
 
 router = APIRouter(
     prefix="/portfolio",
     tags=["Portfolio"]
 )
-
-db_dependency = Annotated[Session, Depends(database.get_db)]
 
 @router.post("/sync")
 def sync_all_portfolios(
@@ -34,9 +33,18 @@ def get_assets(
     current_user: Annotated[models.User, Depends(get_current_user)],
     db: db_dependency
 ):
-    assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
-    # Now that we fetch real-time Alpaca data, mock overrides are completely removed.
-    return assets
+    # Join with BrokerCredential to get nicknames
+    results = db.query(models.Asset, models.BrokerCredential.nickname).outerjoin(
+        models.BrokerCredential, models.Asset.credential_id == models.BrokerCredential.id
+    ).filter(models.Asset.user_id == current_user.id).all()
+    
+    assets_with_nicknames = []
+    for asset, nickname in results:
+        asset_resp = schemas.AssetResponse.from_orm(asset)
+        asset_resp.account_nickname = nickname
+        assets_with_nicknames.append(asset_resp)
+        
+    return assets_with_nicknames
 
 @router.delete("/assets/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_asset(
@@ -101,11 +109,19 @@ def get_transactions(
     db: db_dependency
 ):
     """Return the last 100 trade history records for the current user, newest first."""
-    txs = (
-        db.query(models.Transaction)
+    results = (
+        db.query(models.Transaction, models.BrokerCredential.nickname)
+        .outerjoin(models.BrokerCredential, models.Transaction.credential_id == models.BrokerCredential.id)
         .filter(models.Transaction.user_id == current_user.id)
         .order_by(models.Transaction.timestamp.desc())
         .limit(100)
         .all()
     )
-    return txs
+    
+    txs_with_nicknames = []
+    for tx, nickname in results:
+        tx_resp = schemas.TransactionResponse.from_orm(tx)
+        tx_resp.account_nickname = nickname
+        txs_with_nicknames.append(tx_resp)
+        
+    return txs_with_nicknames

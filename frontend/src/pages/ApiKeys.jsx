@@ -17,6 +17,7 @@ export default function ApiKeys() {
     // form state
     const [showForm, setShowForm] = useState(false);
     const [brokerName, setBrokerName] = useState('Alpaca');
+    const [nickname, setNickname] = useState('');
     const [apiKey, setApiKey] = useState('');
     const [apiSecret, setApiSecret] = useState('');
     const [endpoint, setEndpoint] = useState('');
@@ -47,6 +48,7 @@ export default function ApiKeys() {
         try {
             await axios.post('http://localhost:8000/brokers/credentials', {
                 broker_name: brokerName,
+                nickname: nickname || null,
                 api_key: apiKey,
                 api_secret: apiSecret,
                 endpoint: endpoint || null
@@ -54,8 +56,9 @@ export default function ApiKeys() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setMessage({ type: 'success', text: `${brokerName} account linked successfully!` });
+            setMessage({ type: 'success', text: `${nickname || brokerName} linked successfully!` });
             setShowForm(false);
+            setNickname('');
             setApiKey('');
             setApiSecret('');
             setEndpoint('');
@@ -154,6 +157,13 @@ export default function ApiKeys() {
                         </div>
 
                         <Input
+                            label="Account Nickname (Optional)"
+                            type="text"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            placeholder="e.g. My Main Account"
+                        />
+                        <Input
                             label={brokerName === 'Alpaca' ? "API Key ID (APCA-API-KEY-ID)" : "API Key"}
                             type="text"
                             required
@@ -203,10 +213,12 @@ export default function ApiKeys() {
                         <GlassPanel key={cred.id} className="p-5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
-                                    {cred.broker_name[0]}
+                                    {cred.nickname?.[0] || cred.broker_name[0]}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white">{cred.broker_name} {cred.broker_name === 'Alpaca' && '(Paper)'}</h3>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                                        {cred.nickname || cred.broker_name} {cred.nickname && <span className="text-xs font-normal text-gray-500 dark:text-gray-400">({cred.broker_name})</span>}
+                                    </h3>
                                     <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
                                         <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">Key: {cred.api_key}</span>
                                     </div>
