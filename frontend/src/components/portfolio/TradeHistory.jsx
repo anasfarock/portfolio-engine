@@ -80,14 +80,14 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-[#0f0f0f] dark:bg-[#0f0f0f] text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">
-                            <th className="px-4 py-3 text-left">Symbol</th>
-                            <th className="px-4 py-3 text-left">Type</th>
-                            <th className="px-4 py-3 text-right">Quantity</th>
-                            <th className="px-4 py-3 text-right">Price</th>
-                            <th className="px-4 py-3 text-right">Total Value</th>
-                            <th className="px-4 py-3 text-left">Broker</th>
-                            <th className="px-4 py-3 text-left">Date</th>
+                        <tr className="bg-gray-50/50 dark:bg-[#1a1a1a]">
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left rounded-tl-xl border-l-4 border-transparent">Symbol</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left">Type</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Quantity</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Price</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Total Value</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left">Broker</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left rounded-tr-xl">Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -103,7 +103,7 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                                     }`}
                                 >
                                     {/* Symbol */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-200 shrink-0">
                                                 {tx.symbol?.slice(0, 2).toUpperCase()}
@@ -118,29 +118,29 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                                     </td>
 
                                     {/* Type */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_STYLES[tx.transaction_type] || ''}`}>
                                             {tx.transaction_type}
                                         </span>
                                     </td>
 
                                     {/* Quantity */}
-                                    <td className="px-4 py-3 text-right font-mono text-gray-700 dark:text-gray-300">
+                                    <td className="px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">
                                         {formatQty(tx.quantity)}
                                     </td>
 
                                     {/* Price */}
-                                    <td className="px-4 py-3 text-right font-mono text-gray-700 dark:text-gray-300">
+                                    <td className="px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">
                                         {formatMoney(tx.price, currencySymbol)}
                                     </td>
 
                                     {/* Total Value */}
-                                    <td className="px-4 py-3 text-right font-mono font-semibold text-gray-900 dark:text-white">
+                                    <td className="px-6 py-4 text-right font-mono font-semibold text-gray-900 dark:text-white">
                                         {formatMoney(total, currencySymbol)}
                                     </td>
 
                                     {/* Broker */}
-                                    <td className="px-4 py-3">
+                                    <td className="px-6 py-4">
                                         {(tx.account_nickname || tx.broker_name) && (
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${BROKER_STYLES[tx.broker_name] || 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
                                                 {tx.account_nickname || tx.broker_name}
@@ -149,7 +149,7 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                                     </td>
 
                                     {/* Date */}
-                                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                         {formatDate(tx.timestamp)}
                                     </td>
                                 </tr>
