@@ -101,7 +101,7 @@ Frontend runs at → `http://localhost:5173`
 ## Connecting a Broker
 
 1. Sign in and open the **Avatar dropdown → Manage API Keys**
-2. Click **+ Link Broker** and select your broker:
+2. Click **+ Link Broker**, select your broker, and optionally assign a **Nickname** (useful if connecting multiple accounts from the same provider).
 
 ### Alpaca Paper Trading
 | Field | Value |
@@ -128,4 +128,4 @@ Frontend runs at → `http://localhost:5173`
 - **Active Positions** — count of open holdings
 - **24h Return** — unrealized return percentage
 
-Use the **🏦 Accounts** dropdown to filter the holdings table by broker.
+Use the **🏦 Accounts** dropdown to filter the holdings table and trade history by specific accounts or nicknames.
