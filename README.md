@@ -79,6 +79,10 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 ```bash
 uvicorn main:app --reload
 ```
+#### OR (For Powershell)
+```bash
+.\venv\Scripts\python.exe -m uvicorn main:app --reload
+```
 Backend runs at → `http://localhost:8000`
 
 ---
