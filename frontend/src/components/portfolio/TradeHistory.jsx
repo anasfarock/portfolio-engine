@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
 const TYPE_STYLES = {
-    BUY:  'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+    BUY: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
     SELL: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
 };
 
 const BROKER_STYLES = {
-    'Alpaca':       'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+    'Alpaca': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
     'Binance Demo': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
 };
 
@@ -66,11 +66,10 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                     <button
                         key={f}
                         onClick={() => handleFilter(f)}
-                        className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
-                            filter === f
-                                ? 'bg-primary-600 text-white border-primary-600'
-                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-500'
-                        }`}
+                        className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${filter === f
+                            ? 'bg-primary-600 text-white border-primary-600'
+                            : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-500'
+                            }`}
                     >{f}</button>
                 ))}
                 <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{filtered.length} trades</span>
@@ -86,7 +85,7 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                             <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Quantity</th>
                             <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Price</th>
                             <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Total Value</th>
-                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left">Broker</th>
+                            <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left">Account</th>
                             <th className="px-6 py-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-left rounded-tr-xl">Date</th>
                         </tr>
                     </thead>
@@ -98,9 +97,8 @@ export default function TradeHistory({ transactions = [], loading, currencySymbo
                             return (
                                 <tr
                                     key={tx.id}
-                                    className={`border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
-                                        i % 2 === 0 ? '' : 'bg-gray-50/30 dark:bg-white/[0.015]'
-                                    }`}
+                                    className={`border-b border-gray-100 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/30 dark:bg-white/[0.015]'
+                                        }`}
                                 >
                                     {/* Symbol */}
                                     <td className="px-6 py-4">
