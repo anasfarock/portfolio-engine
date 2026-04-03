@@ -16,18 +16,27 @@ import TradeHistory from './components/portfolio/TradeHistory';
 import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
-  const { token, loading } = useAuth();
+  const { token, loading, isCheckingAuth } = useAuth();
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
+  if (loading || isCheckingAuth) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
       <div className="animate-pulse flex flex-col items-center">
         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-medium">Loading...</p>
+        <p className="font-medium mt-4 text-gray-500">Verifying session...</p>
       </div>
     </div>
   );
 
-  if (!token) return <Navigate to="/login" />;
+  if (!token) return <Navigate to="/login" replace />;
+
+  return children;
+}
+
+function AuthRoute({ children }) {
+  const { token, isCheckingAuth } = useAuth();
+
+  if (isCheckingAuth) return null; // Wait for initial check to avoid flash
+  if (token) return <Navigate to="/dashboard" replace />; // Already logged in
 
   return children;
 }
@@ -325,9 +334,9 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
+          <Route path="/register" element={<AuthRoute><Register /></AuthRoute>} />
+          <Route path="/forgot-password" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
 
           {/* Protected Routes Wrapper */}
           <Route element={

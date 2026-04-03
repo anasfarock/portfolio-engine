@@ -7,8 +7,12 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('access_token'));
+    const [token, setToken] = useState(() => {
+        const stored = localStorage.getItem('access_token');
+        return (stored === 'null' || stored === 'undefined') ? null : stored;
+    });
     const [loading, setLoading] = useState(false);
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     // You can set the default base URL for Axios here
     // axios.defaults.baseURL = 'http://localhost:8000';
@@ -23,6 +27,8 @@ export const AuthProvider = ({ children }) => {
             if (error.response?.status === 401) {
                 logout();
             }
+        } finally {
+            setIsCheckingAuth(false);
         }
     };
 
@@ -33,6 +39,7 @@ export const AuthProvider = ({ children }) => {
         } else {
             delete axios.defaults.headers.common['Authorization'];
             setUser(null);
+            setIsCheckingAuth(false);
         }
     }, [token]);
 
@@ -95,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, logout, loading, refetchUser: fetchUser }}>
+        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );
