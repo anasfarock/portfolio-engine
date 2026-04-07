@@ -6,8 +6,9 @@ import models
 import encryption
 from sqlalchemy.orm import Session
 
-# Binance Spot Demo API Base endpoint (https://developers.binance.com/docs/binance-spot-api-docs/demo-mode/general-info)
-BINANCE_API_BASE = "https://demo-api.binance.com"
+# Binance Spot API Base endpoints
+BINANCE_DEMO_API_BASE = "https://demo-api.binance.com"
+BINANCE_SPOT_API_BASE = "https://api.binance.com"
 
 def generate_signature(query_string: str, api_secret: str) -> str:
     """Generates HMAC SHA256 signature required by Binance API."""
@@ -32,7 +33,9 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
         return {"status": "error", "message": "Credential not found"}
         
     api_secret = encryption.decrypt(cred.encrypted_secret)
-    base_endpoint = cred.endpoint.strip('/') if cred.endpoint else BINANCE_API_BASE
+    base_endpoint = cred.endpoint.strip('/') if cred.endpoint else (
+        BINANCE_DEMO_API_BASE if cred.broker_name == "Binance Demo" else BINANCE_SPOT_API_BASE
+    )
     
     headers = {
         "X-MBX-APIKEY": cred.api_key
@@ -112,7 +115,7 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                             transaction_type=tx_type,
                             quantity=str(trade_qty),
                             price=str(trade_price),
-                            broker_name="Binance Demo",
+                            broker_name=cred.broker_name,
                             credential_id=credential_id,
                             asset_class="Crypto",
                             external_id=ext_id,
@@ -175,7 +178,7 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                 current_price=str(current_price),
                 pnl=str(round(pnl_abs, 8)),
                 pnl_percent=str(round(pnl_pct, 4)),
-                broker_name="Binance Demo",
+                broker_name=cred.broker_name,
                 credential_id=credential_id
             )
             db.add(ast)

@@ -93,7 +93,7 @@ def sync_broker_credential(
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return {"message": result["message"]}
-    elif cred.broker_name == "Binance Demo":
+    elif cred.broker_name in ["Binance Demo", "Binance Spot"]:
         result = binance_sync.sync_binance_account(credential_id, current_user.id, db)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])

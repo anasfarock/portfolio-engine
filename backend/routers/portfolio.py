@@ -22,7 +22,7 @@ def sync_all_portfolios(
         if c.broker_name == "Alpaca":
             res = alpaca_sync.sync_alpaca_account(c.id, current_user.id, db)
             results.append({"broker": c.broker_name, "status": res["status"]})
-        elif c.broker_name == "Binance Demo":
+        elif c.broker_name in ["Binance Demo", "Binance Spot"]:
             res = binance_sync.sync_binance_account(c.id, current_user.id, db)
             results.append({"broker": c.broker_name, "status": res["status"]})
     

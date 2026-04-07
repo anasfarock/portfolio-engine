@@ -8,6 +8,7 @@ const TYPE_STYLES = {
 const BROKER_STYLES = {
     'Alpaca': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
     'Binance Demo': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+    'Binance Spot': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
 };
 
 function formatDate(iso) {
