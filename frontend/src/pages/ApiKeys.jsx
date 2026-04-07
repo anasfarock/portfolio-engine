@@ -139,6 +139,7 @@ export default function ApiKeys() {
                                 <option value="Alpaca">Alpaca Paper Trading</option>
                                 <option value="Binance Demo">Binance Spot Demo</option>
                                 <option value="Binance Spot">Binance Spot</option>
+                                <option value="Interactive Brokers">Interactive Brokers (Web API)</option>
                             </select>
 
                             {/* Dynamic API key helper link */}
@@ -147,12 +148,12 @@ export default function ApiKeys() {
                                 <a
                                     href={brokerName === 'Alpaca'
                                         ? 'https://app.alpaca.markets/paper-trading/overview'
-                                        : (brokerName === 'Binance Spot' ? 'https://www.binance.com/en/my/settings/api-management' : 'https://demo.binance.com/en/my/settings/api-management')}
+                                        : (brokerName === 'Interactive Brokers' ? 'https://www.interactivebrokers.com/sso/Login?action=Settings' : (brokerName === 'Binance Spot' ? 'https://www.binance.com/en/my/settings/api-management' : 'https://demo.binance.com/en/my/settings/api-management'))}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 font-medium text-primary-600 dark:text-primary-400 hover:underline"
                                 >
-                                    Get your {brokerName === 'Alpaca' ? 'Alpaca' : (brokerName === 'Binance Spot' ? 'Binance' : 'Binance Demo')} API key →
+                                    Get your {brokerName === 'Alpaca' ? 'Alpaca' : (brokerName === 'Interactive Brokers' ? 'IBKR' : (brokerName === 'Binance Spot' ? 'Binance' : 'Binance Demo'))} API key →
                                 </a>
                             </div>
                         </div>
@@ -170,7 +171,7 @@ export default function ApiKeys() {
                             required
                             value={apiKey}
                             onChange={(e) => setApiKey(e.target.value)}
-                            placeholder={brokerName === 'Alpaca' ? "e.g. PKXQ9E..." : (brokerName === 'Binance Spot' ? "Your Binance API Key" : "Your Binance Testnet API Key")}
+                            placeholder={brokerName === 'Alpaca' ? "e.g. PKXQ9E..." : (brokerName === 'Interactive Brokers' ? "IBKR Session Token (Leave empty if using local gateway auth)" : (brokerName === 'Binance Spot' ? "Your Binance API Key" : "Your Binance Testnet API Key"))}
                         />
                         <Input
                             label={brokerName === 'Alpaca' ? "Secret Key (APCA-API-SECRET-KEY)" : "Secret Key"}
@@ -178,14 +179,14 @@ export default function ApiKeys() {
                             required
                             value={apiSecret}
                             onChange={(e) => setApiSecret(e.target.value)}
-                            placeholder={brokerName === 'Alpaca' ? "Your Alpaca Secret Key" : "Your Binance Secret Key"}
+                            placeholder={brokerName === 'Alpaca' ? "Your Alpaca Secret Key" : (brokerName === 'Interactive Brokers' ? "IBKR Secret (Omit if unused)" : "Your Binance Secret Key")}
                         />
                         <Input
                             label="API Endpoint (Optional)"
                             type="text"
                             value={endpoint}
                             onChange={(e) => setEndpoint(e.target.value)}
-                            placeholder={brokerName === 'Alpaca' ? "e.g. https://paper-api.alpaca.markets/v2" : (brokerName === 'Binance Spot' ? "e.g. https://api.binance.com" : "e.g. https://demo-api.binance.com")}
+                            placeholder={brokerName === 'Alpaca' ? "e.g. https://paper-api.alpaca.markets/v2" : (brokerName === 'Interactive Brokers' ? "e.g. https://localhost:5000/v1/api" : (brokerName === 'Binance Spot' ? "e.g. https://api.binance.com" : "e.g. https://demo-api.binance.com"))}
                         />
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-6">

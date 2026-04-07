@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, database, alpaca_sync, binance_sync
+import models, schemas, database, alpaca_sync, binance_sync, ibkr_sync
 from auth import get_current_user, db_dependency
 from fastapi import APIRouter
 
@@ -24,6 +24,9 @@ def sync_all_portfolios(
             results.append({"broker": c.broker_name, "status": res["status"]})
         elif c.broker_name in ["Binance Demo", "Binance Spot"]:
             res = binance_sync.sync_binance_account(c.id, current_user.id, db)
+            results.append({"broker": c.broker_name, "status": res["status"]})
+        elif c.broker_name == "Interactive Brokers":
+            res = ibkr_sync.sync_ibkr_account(c.id, current_user.id, db)
             results.append({"broker": c.broker_name, "status": res["status"]})
     
     return {"message": "Auto-sync pipeline completed", "details": results}

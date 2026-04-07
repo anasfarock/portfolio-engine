@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, encryption, database, alpaca_sync, binance_sync
+import models, schemas, encryption, database, alpaca_sync, binance_sync, ibkr_sync
 from auth import get_current_user, db_dependency
 
 router = APIRouter(
@@ -95,6 +95,11 @@ def sync_broker_credential(
         return {"message": result["message"]}
     elif cred.broker_name in ["Binance Demo", "Binance Spot"]:
         result = binance_sync.sync_binance_account(credential_id, current_user.id, db)
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result["message"])
+        return {"message": result["message"]}
+    elif cred.broker_name == "Interactive Brokers":
+        result = ibkr_sync.sync_ibkr_account(credential_id, current_user.id, db)
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["message"])
         return {"message": result["message"]}
