@@ -375,7 +375,7 @@ export default function Settings() {
                     <div>
                         <h3 className="text-sm font-medium text-gray-900 dark:text-white">Export Portfolio Data</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Download a complete backup of your account settings, holdings, and trade history.
+                            Download a complete backup of your account details, holdings, and trade history.
                         </p>
                     </div>
 
