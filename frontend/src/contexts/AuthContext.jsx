@@ -58,7 +58,14 @@ export const AuthProvider = ({ children }) => {
             setToken(data.access_token);
             return { success: true };
         } catch (error) {
-            return { success: false, error: error.response?.data?.detail || 'Login failed' };
+            let errorMsg = error.response?.data?.detail || 'Login failed';
+            if (Array.isArray(errorMsg)) {
+                errorMsg = errorMsg.map(err => {
+                    if (err.loc?.includes('email')) return "Please enter a valid email address.";
+                    return err.msg;
+                }).join(' ');
+            }
+            return { success: false, error: errorMsg };
         } finally {
             setLoading(false);
         }
@@ -90,7 +97,14 @@ export const AuthProvider = ({ children }) => {
             // Optionally login automatically after register
             return await login(email, password);
         } catch (error) {
-            return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+            let errorMsg = error.response?.data?.detail || 'Registration failed';
+            if (Array.isArray(errorMsg)) {
+                errorMsg = errorMsg.map(err => {
+                    if (err.loc?.includes('email')) return "Please enter a valid email address.";
+                    return err.msg;
+                }).join(' ');
+            }
+            return { success: false, error: errorMsg };
         } finally {
             setLoading(false);
         }

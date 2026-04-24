@@ -41,6 +41,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Routes and Middleware continue...
 @app.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: db_dependency):
+    import re
+    if len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+    if not re.search(r"[A-Za-z]", user.password) or not re.search(r"\d", user.password):
+        raise HTTPException(status_code=400, detail="Password must contain a combination of letters and numbers.")
+
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -91,6 +97,11 @@ def update_user_me(
         current_user.full_name = user_update.full_name
         
     if user_update.password is not None and user_update.password.strip() != "":
+        import re
+        if len(user_update.password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+        if not re.search(r"[A-Za-z]", user_update.password) or not re.search(r"\d", user_update.password):
+            raise HTTPException(status_code=400, detail="Password must contain a combination of letters and numbers.")
         current_user.hashed_password = auth.get_password_hash(user_update.password)
         
     db.commit()
@@ -161,8 +172,12 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, db: db_dependency):
 def reset_password(payload: schemas.ResetPasswordRequest, db: db_dependency):
     """Validate the reset token and update the user's password."""
     import datetime as dt
+    import re
+    
     if not payload.new_password or len(payload.new_password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+    if not re.search(r"[A-Za-z]", payload.new_password) or not re.search(r"\d", payload.new_password):
+        raise HTTPException(status_code=400, detail="Password must contain a combination of letters and numbers.")
 
     db_user = db.query(models.User).filter(models.User.password_reset_token == payload.token).first()
     if not db_user:
