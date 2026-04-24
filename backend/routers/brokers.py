@@ -71,6 +71,10 @@ def delete_broker_credential(
     if not cred:
         raise HTTPException(status_code=404, detail="Credential not found")
         
+    # Cascade delete associated assets and transactions
+    db.query(models.Asset).filter(models.Asset.credential_id == credential_id).delete(synchronize_session=False)
+    db.query(models.Transaction).filter(models.Transaction.credential_id == credential_id).delete(synchronize_session=False)
+        
     db.delete(cred)
     db.commit()
 
