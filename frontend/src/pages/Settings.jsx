@@ -261,16 +261,6 @@ export default function Settings() {
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2">
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Show Performance Chart (Not Functional)</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Display the historical line chart on dashboard</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="show_chart" checked={prefs.show_chart} onChange={handleChange} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                            </label>
-                        </div>
                     </div>
                 </GlassPanel>
 
@@ -296,16 +286,8 @@ export default function Settings() {
                         <div className={`space-y-6 pt-4 border-t border-gray-100 dark:border-gray-800 transition-opacity ${!prefs.notify_email ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Price Alerts</h3>
-                                    <p className="text-xs text-gray-500 mt-0.5">Significant daily swings</p>
-                                </div>
-                                <input type="checkbox" name="notify_price_alerts" checked={prefs.notify_price_alerts} onChange={handleChange} className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sync Completions</h3>
-                                    <p className="text-xs text-gray-500 mt-0.5">When brokers finish syncing</p>
+                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Login Alerts</h3>
+                                    <p className="text-xs text-gray-500 mt-0.5">When your account is accessed from a new device</p>
                                 </div>
                                 <input type="checkbox" name="notify_sync_complete" checked={prefs.notify_sync_complete} onChange={handleChange} className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
                             </div>
