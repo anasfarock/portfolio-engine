@@ -302,8 +302,8 @@ export default function Settings() {
 
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Milestone Alerts</h3>
-                                    <p className="text-xs text-gray-500 mt-0.5">Hitting new ATHs or capital goals</p>
+                                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Broker Integration</h3>
+                                    <p className="text-xs text-gray-500 mt-0.5">When a new broker is linked to your account</p>
                                 </div>
                                 <input type="checkbox" name="notify_milestones" checked={prefs.notify_milestones} onChange={handleChange} className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
                             </div>
