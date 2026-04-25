@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 import ThemeToggle from '../components/ThemeToggle';
 import { LogIn, ShieldCheck, ArrowLeft, KeyRound, MailCheck, Lock } from 'lucide-react';
 
@@ -20,7 +21,7 @@ export default function Login() {
     const [tempToken, setTempToken] = useState('');
     const [mfaCode, setMfaCode] = useState('');
 
-    const { login, verifyMfa, loading } = useAuth();
+    const { login, loginWithGoogle, verifyMfa, loading } = useAuth();
     const navigate = useNavigate();
 
     const goBack = (target = 'login') => {
@@ -32,6 +33,19 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault(); setError('');
         const result = await login(email, password);
+        if (result.success) {
+            navigate('/dashboard');
+        } else if (result.mfa_required) {
+            setTempToken(result.temp_token);
+            setStep('mfa');
+        } else {
+            setError(result.error);
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setError('');
+        const result = await loginWithGoogle(credentialResponse.credential);
         if (result.success) {
             navigate('/dashboard');
         } else if (result.mfa_required) {
@@ -120,8 +134,31 @@ export default function Login() {
             <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">Sign in to your SPAIE</p>
 
             <GlassPanel>
+                {errorBox}
+                
+                <div className="flex justify-center mb-6">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => setError('Google Sign-In failed')}
+                        theme="filled_black"
+                        shape="pill"
+                        text="signin_with"
+                        size="large"
+                    />
+                </div>
+
+                <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-full">
+                            Or continue with email
+                        </span>
+                    </div>
+                </div>
+
                 <form className="space-y-6" onSubmit={handleSubmit}>
-                    {errorBox}
                     <Input label="Email address" id="email" type="email" autoComplete="email" required
                         placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <Input label="Password" id="password" type="password" autoComplete="current-password" required

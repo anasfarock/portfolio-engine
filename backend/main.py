@@ -267,8 +267,76 @@ def reset_password(payload: schemas.ResetPasswordRequest, db: db_dependency):
     db.commit()
     return {"message": "Password updated successfully. You can now log in."}
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
+class GoogleAuthRequest(schemas.BaseModel):
+    credential: str
 
+@app.post("/auth/google")
+def auth_google(payload: GoogleAuthRequest, background_tasks: BackgroundTasks, db: db_dependency):
+    try:
+        client_id = os.environ.get("GOOGLE_CLIENT_ID")
+        if not client_id or client_id == "your_google_client_id_here":
+            raise HTTPException(status_code=500, detail="Google Client ID is not configured on the server")
+
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(payload.credential, google_requests.Request(), client_id)
+        
+        email = idinfo.get("email")
+        name = idinfo.get("name", "Google User")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="No email provided by Google")
+            
+        db_user = db.query(models.User).filter(models.User.email == email).first()
+        
+        if not db_user:
+            # Auto-register new user
+            hashed_password = auth.get_password_hash(secrets.token_urlsafe(32)) # random strong password
+            db_user = models.User(
+                email=email,
+                hashed_password=hashed_password,
+                full_name=name,
+                is_verified=True, # Google verified it
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+        elif not db_user.is_verified:
+            # Verify the user since Google verified them
+            db_user.is_verified = True
+            db_user.email_verification_code = None
+            db_user.email_verification_expires = None
+            db.commit()
+            db.refresh(db_user)
+
+        # Check MFA
+        if db_user.mfa_enabled:
+            otp = f"{secrets.randbelow(1000000):06d}"
+            db_user.mfa_code = otp
+            db_user.mfa_expires = dt.datetime.utcnow() + dt.timedelta(minutes=10)
+            db.commit()
+            
+            background_tasks.add_task(email_service.send_mfa_otp, db_user.email, otp)
+            
+            temp_token = auth.create_access_token(
+                data={"sub": db_user.email, "mfa_pending": True},
+                expires_minutes=5
+            )
+            return {"mfa_required": True, "temp_token": temp_token}
+
+        # Successful login
+        pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == db_user.id).first()
+        if pref and pref.notify_email and pref.notify_milestones:
+            now_str = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            background_tasks.add_task(email_service.send_login_alert, db_user.email, now_str)
+
+        access_token = auth.create_access_token(data={"sub": db_user.email})
+        return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
+
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
 @app.post("/users/me/avatar", response_model=schemas.UserResponse)
 async def upload_avatar(
     current_user: Annotated[models.User, Depends(get_current_user)],

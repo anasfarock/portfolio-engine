@@ -86,6 +86,24 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const loginWithGoogle = async (credential) => {
+        setLoading(true);
+        try {
+            const response = await axios.post('http://localhost:8000/auth/google', { credential });
+            const data = response.data;
+            if (data.mfa_required) {
+                return { success: false, mfa_required: true, temp_token: data.temp_token };
+            }
+            localStorage.setItem('access_token', data.access_token);
+            setToken(data.access_token);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.detail || 'Google Login failed' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const register = async (email, password, full_name) => {
         setLoading(true);
         try {
@@ -130,7 +148,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, verifyRegistration, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
+        <AuthContext.Provider value={{ user, token, login, loginWithGoogle, verifyMfa, register, verifyRegistration, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

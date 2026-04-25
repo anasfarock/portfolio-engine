@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 import ThemeToggle from '../components/ThemeToggle';
 import { UserPlus } from 'lucide-react';
 
@@ -15,8 +16,20 @@ export default function Register() {
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState(1);
     const [error, setError] = useState('');
-    const { register, verifyRegistration, loading } = useAuth();
+    const { register, verifyRegistration, loginWithGoogle, loading } = useAuth();
     const navigate = useNavigate();
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setError('');
+        const result = await loginWithGoogle(credentialResponse.credential);
+        if (result.success) {
+            navigate('/dashboard');
+        } else if (result.mfa_required) {
+            navigate('/login'); // If they use an existing account with MFA enabled, force them to the login screen
+        } else {
+            setError(result.error);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -67,13 +80,36 @@ export default function Register() {
 
                 <GlassPanel>
                     {step === 1 ? (
-                        <form className="space-y-6" onSubmit={handleSubmit}>
+                        <>
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
+                                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center mb-6">
                                     {error}
                                 </div>
                             )}
 
+                            <div className="flex justify-center mb-6">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => setError('Google Sign-In failed')}
+                                    theme="filled_black"
+                                    shape="pill"
+                                    text="signup_with"
+                                    size="large"
+                                />
+                            </div>
+
+                            <div className="relative mb-6">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                                </div>
+                                <div className="relative flex justify-center text-sm">
+                                    <span className="px-2 bg-transparent text-gray-500 dark:text-gray-400 bg-white dark:bg-black rounded-full relative z-20">
+                                        Or register with email
+                                    </span>
+                                </div>
+                            </div>
+
+                            <form className="space-y-6" onSubmit={handleSubmit}>
                             <Input
                                 label="Full Name"
                                 id="name"
@@ -111,6 +147,7 @@ export default function Register() {
                                 Sign up
                             </Button>
                         </form>
+                        </>
                     ) : (
                         <form className="space-y-6" onSubmit={handleVerify}>
                             <div className="text-center mb-6">
