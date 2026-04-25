@@ -12,6 +12,7 @@ A full-stack multi-broker portfolio dashboard built with **React (Vite)** + **Fa
 - 👤 **UserProfile management** — centered profile management with avatar uploading.
 - 📄 **Data Portability** — export your full portfolio and activity as clean PDF reports or JSON backups.
 - 📧 **Production-Ready Email Authentication** — Registration verification, Two-Factor Authentication (MFA) logins, and Forgot Password flows backed by real One-Time Passcodes (OTPs) delivered securely to your email.
+- 🌐 **Google Single Sign-On (SSO)** — Seamless, one-click registration and login directly linked to Google OAuth 2.0 (respects MFA rules).
 - 🔔 **Automated Notifications** — Opt-in email alerts for new logins and newly connected broker integrations.
 
 ---
@@ -73,6 +74,9 @@ SMTP_USERNAME=your_brevo_email@example.com
 SMTP_PASSWORD=your_brevo_smtp_password
 FROM_EMAIL=noreply@yourdomain.com
 FROM_NAME="Portfolio Engine"
+
+# Google SSO (Required for "Sign in with Google")
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```
 
 > **SQLite fallback**: omit `PORTFOLIO_DB_URL` and a local `portfolio.db` file will be used automatically.
@@ -99,6 +103,14 @@ Backend runs at → `http://localhost:8000`
 
 ### 3. Frontend Setup
 
+#### Configure `.env`
+Create `frontend/.env`:
+```env
+# Required for "Sign in with Google"
+VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+```
+
+#### Start the Frontend
 ```bash
 cd frontend
 npm install
