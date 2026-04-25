@@ -15,7 +15,6 @@ export default function ForgotPassword() {
     const [submitting, setSubmitting] = useState(false);
 
     // Reset token fields
-    const [devToken, setDevToken] = useState('');
     const [resetToken, setResetToken] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,11 +25,11 @@ export default function ForgotPassword() {
         e.preventDefault(); setError(''); setSubmitting(true);
         try {
             const res = await axios.post('http://localhost:8000/auth/forgot-password', { email });
-            if (res.data.dev_token) {
-                setDevToken(res.data.dev_token);
-                setResetToken(res.data.dev_token); // auto-fill
-            }
             setSuccessMsg(res.data.message);
+            setTimeout(() => {
+                setStep('reset');
+                setSuccessMsg('');
+            }, 1500);
         } catch (err) {
             setError(err.response?.data?.detail || 'Something went wrong');
         } finally {
@@ -100,22 +99,12 @@ export default function ForgotPassword() {
                         </div>
                         <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Forgot Password</h2>
                         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
-                            Enter your email and we'll generate a reset token
+                            Enter your email and we'll send you a 6-digit verification code
                         </p>
                         <GlassPanel>
                             {successMsg ? (
                                 <div className="space-y-4">
                                     {successBox}
-                                    {devToken && (
-                                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-400 space-y-1">
-                                            <p className="font-semibold">Dev Mode — Reset Token:</p>
-                                            <p className="font-mono break-all">{devToken}</p>
-                                            <p className="opacity-70">This is auto-filled in the next step. In production this would be emailed.</p>
-                                        </div>
-                                    )}
-                                    <Button onClick={() => { setStep('reset'); setError(''); setSuccessMsg(''); }} icon={Lock}>
-                                        Continue to Reset Password
-                                    </Button>
                                 </div>
                             ) : (
                                 <form className="space-y-5" onSubmit={handleForgotSubmit}>
@@ -144,7 +133,7 @@ export default function ForgotPassword() {
                         </div>
                         <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Reset Password</h2>
                         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
-                            Paste your reset token and choose a new password
+                            Enter the code sent to your email and choose a new password
                         </p>
                         <GlassPanel>
                             {successMsg ? (
@@ -155,16 +144,17 @@ export default function ForgotPassword() {
                             ) : (
                                 <form className="space-y-5" onSubmit={handleResetSubmit}>
                                     {errorBox}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reset Token</label>
-                                        <textarea
-                                            rows={2}
-                                            value={resetToken}
-                                            onChange={(e) => setResetToken(e.target.value)}
-                                            placeholder="Paste your reset token here"
-                                            className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#141414] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none transition-colors"
-                                        />
-                                    </div>
+                                    <Input
+                                        label="6-Digit Verification Code"
+                                        id="reset-token"
+                                        type="text"
+                                        required
+                                        placeholder="123456"
+                                        value={resetToken}
+                                        onChange={(e) => setResetToken(e.target.value)}
+                                        maxLength={6}
+                                        className="text-center text-xl tracking-widest"
+                                    />
                                     <Input
                                         label="New Password"
                                         id="new-password"

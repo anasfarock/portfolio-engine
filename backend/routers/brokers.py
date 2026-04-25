@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Annotated
-import models, schemas, encryption, database, alpaca_sync, binance_sync, ibkr_sync
+import models, schemas, encryption, database, alpaca_sync, binance_sync, ibkr_sync, email_service
 from auth import get_current_user, db_dependency
 
 router = APIRouter(
@@ -15,6 +15,7 @@ db_dependency = Annotated[Session, Depends(database.get_db)]
 def create_broker_credential(
     credential: schemas.BrokerCredentialCreate,
     current_user: Annotated[models.User, Depends(get_current_user)],
+    background_tasks: BackgroundTasks,
     db: db_dependency
 ):
     # Encrypt the Secret before storing
@@ -33,6 +34,16 @@ def create_broker_credential(
     db.add(new_cred)
     db.commit()
     db.refresh(new_cred)
+    
+    # Check if the user has email notifications enabled for Broker Integration
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == current_user.id).first()
+    if pref and pref.notify_email and pref.notify_sync_complete: # notify_sync_complete is now "Broker Integration"
+        background_tasks.add_task(
+            email_service.send_broker_integration_alert, 
+            current_user.email, 
+            new_cred.broker_name, 
+            new_cred.nickname
+        )
     
     # Send masked API key in response for security
     masked_cred = schemas.BrokerCredentialResponse(

@@ -92,11 +92,10 @@ export default function Login() {
             <GlassPanel>
                 <form className="space-y-5" onSubmit={handleMfaSubmit}>
                     {errorBox}
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs p-3 rounded-lg text-center">
-                        <strong>Dev Mode:</strong> Enter any 6-digit number (e.g. 123456)
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 text-xs p-3 rounded-lg text-center">
+                        A 6-digit verification code has been sent to your email.
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">Verification Code</label>
                         <input
                             type="text" inputMode="numeric" maxLength={6} value={mfaCode} autoFocus
                             onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}

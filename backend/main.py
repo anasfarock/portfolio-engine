@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 # Load all environment variables at the absolute top before nested imports run
 load_dotenv()
 
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
@@ -12,8 +12,10 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
+import secrets
+import datetime as dt
 
-import models, schemas, auth, database
+import models, schemas, auth, database, email_service
 from auth import get_db, get_current_user, db_dependency
 import os
 import shutil
@@ -40,7 +42,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Routes and Middleware continue...
 @app.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user: schemas.UserCreate, db: db_dependency):
+def register_user(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: db_dependency):
     import re
     if len(user.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
@@ -48,22 +50,67 @@ def register_user(user: schemas.UserCreate, db: db_dependency):
         raise HTTPException(status_code=400, detail="Password must contain a combination of letters and numbers.")
 
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = auth.get_password_hash(user.password)
+    otp = f"{secrets.randbelow(1000000):06d}"
+    
+    if db_user:
+        if db_user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        else:
+            # Re-use the existing unverified account, update password and new OTP
+            db_user.hashed_password = hashed_password
+            db_user.full_name = user.full_name
+            db_user.email_verification_code = otp
+            db_user.email_verification_expires = dt.datetime.utcnow() + dt.timedelta(minutes=15)
+            db.commit()
+            db.refresh(db_user)
+            background_tasks.add_task(email_service.send_registration_otp, db_user.email, otp)
+            return db_user
+
     new_user = models.User(
         email=user.email,
         hashed_password=hashed_password,
-        full_name=user.full_name
+        full_name=user.full_name,
+        is_verified=False,
+        email_verification_code=otp,
+        email_verification_expires=dt.datetime.utcnow() + dt.timedelta(minutes=15)
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    background_tasks.add_task(email_service.send_registration_otp, new_user.email, otp)
+    
     return new_user
 
+class VerifyRegistrationRequest(schemas.BaseModel):
+    email: str
+    code: str
+
+@app.post("/register/verify")
+def verify_registration(payload: VerifyRegistrationRequest, db: db_dependency):
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="User is already verified")
+        
+    if user.email_verification_code != payload.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+    if user.email_verification_expires and user.email_verification_expires < dt.datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Verification code expired. Please register again.")
+        
+    user.is_verified = True
+    user.email_verification_code = None
+    user.email_verification_expires = None
+    db.commit()
+    
+    access_token = auth.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
+
 @app.post("/login")
-def login_user(user: schemas.UserLogin, db: db_dependency):
+def login_user(user: schemas.UserLogin, background_tasks: BackgroundTasks, db: db_dependency):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if not db_user or not auth.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(
@@ -71,14 +118,30 @@ def login_user(user: schemas.UserLogin, db: db_dependency):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
+    if not db_user.is_verified:
+        raise HTTPException(status_code=403, detail="Please verify your email address before logging in.")
 
-    # If MFA is enabled, return a short-lived temp token instead of a full session token
+    # If MFA is enabled, generate real OTP, save, and email it
     if db_user.mfa_enabled:
+        otp = f"{secrets.randbelow(1000000):06d}"
+        db_user.mfa_code = otp
+        db_user.mfa_expires = dt.datetime.utcnow() + dt.timedelta(minutes=10)
+        db.commit()
+        
+        background_tasks.add_task(email_service.send_mfa_otp, db_user.email, otp)
+        
         temp_token = auth.create_access_token(
             data={"sub": db_user.email, "mfa_pending": True},
             expires_minutes=5
         )
         return {"mfa_required": True, "temp_token": temp_token}
+
+    # Successful standard login
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == db_user.id).first()
+    if pref and pref.notify_email and pref.notify_milestones: # notify_milestones was repurposed to Login Alerts
+        now_str = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        background_tasks.add_task(email_service.send_login_alert, db_user.email, now_str)
 
     access_token = auth.create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
@@ -120,11 +183,9 @@ def toggle_mfa(
     return current_user
 
 @app.post("/mfa/verify")
-def verify_mfa(payload: schemas.MfaVerify, db: db_dependency):
+def verify_mfa(payload: schemas.MfaVerify, background_tasks: BackgroundTasks, db: db_dependency):
     """
-    Verify the MFA code submitted after login.
-    In dev mode: any 6-digit numeric code is accepted.
-    In production: this would validate a TOTP code.
+    Verify the MFA OTP code submitted after login.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -139,34 +200,44 @@ def verify_mfa(payload: schemas.MfaVerify, db: db_dependency):
     except JWTError:
         raise credentials_exception
 
-    # Dev-mode: accept any 6-digit code
-    if not payload.code.strip().isdigit() or len(payload.code.strip()) != 6:
-        raise HTTPException(status_code=400, detail="Invalid code. Please enter a 6-digit code.")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user or not user.mfa_code:
+        raise HTTPException(status_code=400, detail="Invalid MFA request")
+        
+    if user.mfa_code != payload.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+    if user.mfa_expires and user.mfa_expires < dt.datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Verification code expired. Please log in again.")
+        
+    # Clear the MFA code upon success
+    user.mfa_code = None
+    user.mfa_expires = None
+    db.commit()
 
-    # Issue the real full-session access token
+    # Trigger Login Alert if enabled
+    pref = db.query(models.UserPreferences).filter(models.UserPreferences.user_id == user.id).first()
+    if pref and pref.notify_email and pref.notify_milestones:
+        now_str = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        background_tasks.add_task(email_service.send_login_alert, user.email, now_str)
+
     access_token = auth.create_access_token(data={"sub": email})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/auth/forgot-password")
-def forgot_password(payload: schemas.ForgotPasswordRequest, db: db_dependency):
+def forgot_password(payload: schemas.ForgotPasswordRequest, background_tasks: BackgroundTasks, db: db_dependency):
     """
-    Generate a password reset token for the given email.
-    DEV MODE: returns the token directly in the response instead of sending an email.
-    Returns a generic success message regardless of whether the email exists (security best practice).
+    Generate a 6-digit OTP password reset token for the given email and send it.
     """
-    import uuid, datetime as dt
     db_user = db.query(models.User).filter(models.User.email == payload.email).first()
     if db_user:
-        token = str(uuid.uuid4())
-        db_user.password_reset_token = token
+        otp = f"{secrets.randbelow(1000000):06d}"
+        db_user.password_reset_token = otp
         db_user.password_reset_expires = dt.datetime.utcnow() + dt.timedelta(minutes=30)
         db.commit()
-        # In dev mode we return the token so it can be pasted into the UI
-        return {
-            "message": "If this email is registered, a reset link has been generated.",
-            "dev_token": token  # Remove this in production
-        }
-    return {"message": "If this email is registered, a reset link has been generated."}
+        
+        background_tasks.add_task(email_service.send_password_reset_otp, db_user.email, otp)
+        
+    return {"message": "If this email is registered, a reset code has been sent."}
 
 @app.post("/auth/reset-password")
 def reset_password(payload: schemas.ResetPasswordRequest, db: db_dependency):

@@ -12,9 +12,19 @@ class User(Base):
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
     mfa_enabled = Column(Boolean, default=False)
+    
+    # Registration & Password Reset
+    email_verification_code = Column(String, nullable=True)
+    email_verification_expires = Column(DateTime, nullable=True)
     password_reset_token = Column(String, nullable=True)
     password_reset_expires = Column(DateTime, nullable=True)
+    
+    # MFA Authentication
+    mfa_code = Column(String, nullable=True)
+    mfa_expires = Column(DateTime, nullable=True)
+    
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships

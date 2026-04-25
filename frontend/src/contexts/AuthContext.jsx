@@ -94,8 +94,7 @@ export const AuthProvider = ({ children }) => {
                 password,
                 full_name
             });
-            // Optionally login automatically after register
-            return await login(email, password);
+            return { success: true, require_verification: true, email: email };
         } catch (error) {
             let errorMsg = error.response?.data?.detail || 'Registration failed';
             if (Array.isArray(errorMsg)) {
@@ -110,13 +109,28 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const verifyRegistration = async (email, code) => {
+        setLoading(true);
+        try {
+            const response = await axios.post('http://localhost:8000/register/verify', { email, code });
+            const { access_token } = response.data;
+            localStorage.setItem('access_token', access_token);
+            setToken(access_token);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.detail || 'Verification failed' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('access_token');
         setToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
+        <AuthContext.Provider value={{ user, token, login, verifyMfa, register, verifyRegistration, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

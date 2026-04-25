@@ -12,8 +12,10 @@ export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [otp, setOtp] = useState('');
+    const [step, setStep] = useState(1);
     const [error, setError] = useState('');
-    const { register, loading } = useAuth();
+    const { register, verifyRegistration, loading } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -26,6 +28,17 @@ export default function Register() {
         }
 
         const result = await register(email, password, fullName);
+        if (result.success && result.require_verification) {
+            setStep(2);
+        } else {
+            setError(result.error || 'Registration failed');
+        }
+    };
+
+    const handleVerify = async (e) => {
+        e.preventDefault();
+        setError('');
+        const result = await verifyRegistration(email, otp);
         if (result.success) {
             navigate('/dashboard');
         } else {
@@ -53,50 +66,82 @@ export default function Register() {
                 </p>
 
                 <GlassPanel>
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
-                                {error}
+                    {step === 1 ? (
+                        <form className="space-y-6" onSubmit={handleSubmit}>
+                            {error && (
+                                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
+                                    {error}
+                                </div>
+                            )}
+
+                            <Input
+                                label="Full Name"
+                                id="name"
+                                type="text"
+                                autoComplete="name"
+                                required
+                                placeholder="John Doe"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                            />
+
+                            <Input
+                                label="Email address"
+                                id="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+
+                            <Input
+                                label="Password"
+                                id="password"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+
+                            <Button type="submit" isLoading={loading} icon={UserPlus}>
+                                Sign up
+                            </Button>
+                        </form>
+                    ) : (
+                        <form className="space-y-6" onSubmit={handleVerify}>
+                            <div className="text-center mb-6">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    We sent a 6-digit verification code to <span className="font-semibold text-gray-900 dark:text-white">{email}</span>.
+                                </p>
                             </div>
-                        )}
 
-                        <Input
-                            label="Full Name"
-                            id="name"
-                            type="text"
-                            autoComplete="name"
-                            required
-                            placeholder="John Doe"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                        />
+                            {error && (
+                                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg text-center">
+                                    {error}
+                                </div>
+                            )}
 
-                        <Input
-                            label="Email address"
-                            id="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
+                            <Input
+                                label="Verification Code"
+                                id="otp"
+                                type="text"
+                                required
+                                placeholder="123456"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                maxLength={6}
+                                className="text-center text-xl tracking-widest"
+                            />
 
-                        <Input
-                            label="Password"
-                            id="password"
-                            type="password"
-                            autoComplete="new-password"
-                            required
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-
-                        <Button type="submit" isLoading={loading} icon={UserPlus}>
-                            Sign up
-                        </Button>
-                    </form>
+                            <Button type="submit" isLoading={loading}>
+                                Verify & Continue
+                            </Button>
+                        </form>
+                    )}
 
                     <div className="mt-6">
                         <div className="relative">

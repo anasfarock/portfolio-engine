@@ -11,7 +11,8 @@ A full-stack multi-broker portfolio dashboard built with **React (Vite)** + **Fa
 - 🌙 **Theme Control** — toggle between Dark, Light, and System themes in App Settings.
 - 👤 **UserProfile management** — centered profile management with avatar uploading.
 - 📄 **Data Portability** — export your full portfolio and activity as clean PDF reports or JSON backups.
-- 🔑 **Recovery Flow** — dedicated Forgot Password and secure Reset Password screens.
+- 📧 **Production-Ready Email Authentication** — Registration verification, Two-Factor Authentication (MFA) logins, and Forgot Password flows backed by real One-Time Passcodes (OTPs) delivered securely to your email.
+- 🔔 **Automated Notifications** — Opt-in email alerts for new logins and newly connected broker integrations.
 
 ---
 
@@ -64,9 +65,18 @@ Create `backend/.env`:
 PORTFOLIO_DB_URL=postgresql://user:password@localhost/portfolio_db
 SECRET_KEY=your_super_secret_jwt_key
 ENCRYPTION_KEY=your_generated_fernet_key
+
+# Email Settings (Required for Registration & MFA)
+SMTP_SERVER=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USERNAME=your_brevo_email@example.com
+SMTP_PASSWORD=your_brevo_smtp_password
+FROM_EMAIL=noreply@yourdomain.com
+FROM_NAME="Portfolio Engine"
 ```
 
 > **SQLite fallback**: omit `PORTFOLIO_DB_URL` and a local `portfolio.db` file will be used automatically.
+> **Email fallback**: If SMTP credentials are not provided, the application will not crash; it will print the 6-digit OTP codes directly to your backend terminal console for local debugging.
 
 **Generate a valid `ENCRYPTION_KEY`:**
 ```bash
