@@ -115,13 +115,7 @@ graph TD
 
 ## Security
 
-Financial credential safety is a core design principle:
-
-1. **At-Rest Encryption** — broker API keys and secrets are encrypted using AES-256 (via the Fernet specification) before they ever touch the database.
-2. **Two-Factor Authentication** — enable MFA in App Settings for an extra layer of login security backed by real OTP email delivery.
-3. **JWT Session Tokens** — stateless, signed tokens with configurable expiry for all authenticated routes.
-4. **Password Sovereignty** — dedicated, mobile-responsive screens for password recovery and account rotation.
-5. **Rate Limiting** — API request queuing and rate limiting protect both the backend and external broker APIs from abuse.
+Financial credential safety is a core design principle. See our [Security Policy](SECURITY.md) for details on encryption, MFA, and session management.
 
 ---
 
@@ -415,47 +409,34 @@ A heatmap-style daily P&L calendar showing gain/loss for every trading day at a 
 ```
 portfolio-engine/
 ├── backend/
-│   ├── main.py                  # FastAPI entry point
-│   ├── requirements.txt
-│   ├── setup.bat / setup.sh
-│   ├── .env                     # (not committed)
+│   ├── main.py                  # FastAPI entry point & user/auth routes
+│   ├── auth.py                  # JWT & password utility functions
+│   ├── models.py                # SQLAlchemy ORM models
+│   ├── schemas.py               # Pydantic models
+│   ├── database.py              # Database connection
+│   ├── encryption.py            # Fernet encryption service
+│   ├── email_service.py         # SMTP email delivery
+│   ├── alpaca_sync.py           # Alpaca broker synchronization
+│   ├── binance_sync.py          # Binance broker synchronization
+│   ├── ibkr_sync.py             # IBKR broker synchronization
+│   ├── pdf_export.py            # PDF report generation
+│   ├── migrate_db.py            # DB schema migration utility
 │   ├── routers/
-│   │   ├── auth.py              # Login, register, MFA, Google SSO
-│   │   ├── profile.py           # User profile management
-│   │   ├── brokers.py           # Broker integration & sync
-│   │   ├── market.py            # Market data pipeline
-│   │   ├── news.py              # News aggregation pipeline
-│   │   ├── attribution.py       # Portfolio attribution engine
-│   │   ├── sentiment.py         # Sentiment analysis module
-│   │   ├── financials.py        # Financial analysis engine
-│   │   ├── technical.py         # Technical analysis module
-│   │   ├── insights.py          # AI insights & recommendations
-│   │   ├── visualization.py     # Portfolio visualization
-│   │   └── calendar.py          # Calendar P&L analysis
-│   ├── models/                  # SQLAlchemy ORM models
-│   ├── schemas/                 # Pydantic request/response schemas
-│   ├── services/                # Business logic layer
-│   ├── tasks/                   # Celery background tasks
-│   └── db.py                    # DB connection and session management
+│   │   ├── brokers.py           # Broker management routes
+│   │   └── portfolio.py         # Portfolio data routes
+│   ├── static/                  # Static assets (avatars, etc.)
+│   └── requirements.txt         # Backend dependencies
 │
 └── frontend/
     ├── src/
-    │   ├── main.jsx
-    │   ├── App.jsx
-    │   ├── store/               # Redux store and slices
-    │   ├── pages/
-    │   │   ├── Dashboard.jsx
-    │   │   ├── Attribution.jsx
-    │   │   ├── Sentiment.jsx
-    │   │   ├── Financials.jsx
-    │   │   ├── Technical.jsx
-    │   │   ├── Insights.jsx
-    │   │   ├── Calendar.jsx
-    │   │   └── Settings.jsx
+    │   ├── main.jsx             # React entry point
+    │   ├── App.jsx              # Main App component & routing
     │   ├── components/          # Reusable UI components
-    │   └── hooks/               # Custom React hooks (WebSocket, polling)
-    ├── .env                     # (not committed)
-    └── vite.config.js
+    │   ├── contexts/            # React Contexts (Auth, etc.)
+    │   ├── pages/               # Page components (Login, Dashboard, etc.)
+    │   └── assets/              # Images and icons
+    ├── package.json             # Frontend dependencies
+    └── vite.config.js           # Vite configuration
 ```
 
 ---
