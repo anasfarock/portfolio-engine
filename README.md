@@ -10,6 +10,7 @@ A full-stack multi-broker portfolio intelligence platform built with **React (Vi
 - 🔄 **Manual Refresh** — trigger an immediate sync from the Dashboard at any time.
 - 🏦 **Multi-Broker Hub** — connect Alpaca and Binance accounts into one unified interface.
 - 🔐 **Dual-Layer Security** — Two-Factor Authentication (MFA) and Fernet AES-256 API secret encryption.
+- 📡 **Live Markets Page** — real-time price quotes for Stocks, Crypto, and Forex with 10s auto-refresh, top gainers/losers, and symbol search.
 - 🤖 **AI-Powered Insights** — AI recommendations engine synthesizes attribution, sentiment, and financial signals into actionable portfolio guidance.
 - 📈 **Portfolio Attribution** — Brinson-Fachler methodology decomposes returns into allocation and selection effects.
 - 🗓️ **Calendar P&L View** — heatmap-style daily profit/loss calendar for trade journaling and pattern recognition.
@@ -139,6 +140,7 @@ Financial credential safety is a core design principle. See our [Security Policy
 - [Python](https://www.python.org/downloads/) v3.9+
 - [Ollama](https://ollama.com/) (for local Mistral 7B sentiment analysis)
 - PostgreSQL *(optional — SQLite is used automatically as a fallback)*
+- [Redis](https://memurai.com/get-memurai) *(optional — price caching for the Markets page. App works without it but fetches prices live on every request)*
 
 ---
 
@@ -185,6 +187,12 @@ FROM_NAME="Portfolio Engine"
 
 # Google SSO (Required for "Sign in with Google")
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+
+# Redis & Celery (Optional — enables price caching for the Markets page)
+# Windows: Install Memurai from https://memurai.com/get-memurai
+REDIS_URL=redis://localhost:6379
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
 ```
 
 > **SQLite fallback**: omit `PORTFOLIO_DB_URL` and a local `portfolio.db` file will be used automatically.
@@ -340,12 +348,12 @@ A heatmap-style daily P&L calendar showing gain/loss for every trading day at a 
 - Real-time portfolio synchronization (15/30/60s intervals)
 - Trade history import and tracking
 
-### 4. Market Data Pipeline `[ ]`
-- Real-time price aggregation across all connected brokers
-- Redis caching with configurable TTL management
-- Rate limiting and request queuing
-- Historical OHLCV data retrieval
+### 4. Market Data Pipeline `[x]`
+- Real-time price aggregation via yfinance (with Redis cache when available)
+- Redis caching with 15s TTL — gracefully falls back to live fetch if Redis is offline
+- Historical OHLCV data retrieval for charting
 - Bid-ask spread tracking
+- Dedicated **Markets** page with Stocks, Crypto & Forex watchlists, top gainers/losers, and 10s auto-refresh
 
 ### 5. News Aggregation Pipeline `[ ]`
 - Fetching from 100+ financial RSS sources
@@ -416,6 +424,7 @@ portfolio-engine/
 │   ├── database.py              # Database connection
 │   ├── encryption.py            # Fernet encryption service
 │   ├── email_service.py         # SMTP email delivery
+│   ├── celery_app.py            # Celery worker & beat schedule
 │   ├── alpaca_sync.py           # Alpaca broker synchronization
 │   ├── binance_sync.py          # Binance broker synchronization
 │   ├── ibkr_sync.py             # IBKR broker synchronization
@@ -423,7 +432,12 @@ portfolio-engine/
 │   ├── migrate_db.py            # DB schema migration utility
 │   ├── routers/
 │   │   ├── brokers.py           # Broker management routes
-│   │   └── portfolio.py         # Portfolio data routes
+│   │   ├── portfolio.py         # Portfolio data routes
+│   │   └── market.py            # Market data & quotes routes
+│   ├── services/
+│   │   └── market_data.py       # Redis cache + yfinance price engine
+│   ├── tasks/
+│   │   └── market_tasks.py      # Celery background price refresh task
 │   ├── static/                  # Static assets (avatars, etc.)
 │   └── requirements.txt         # Backend dependencies
 │
@@ -433,7 +447,8 @@ portfolio-engine/
     │   ├── App.jsx              # Main App component & routing
     │   ├── components/          # Reusable UI components
     │   ├── contexts/            # React Contexts (Auth, etc.)
-    │   ├── pages/               # Page components (Login, Dashboard, etc.)
+    │   ├── hooks/               # Custom React hooks (useMarketData, etc.)
+    │   ├── pages/               # Page components (Login, Dashboard, Markets, etc.)
     │   └── assets/              # Images and icons
     ├── package.json             # Frontend dependencies
     └── vite.config.js           # Vite configuration
@@ -468,6 +483,9 @@ All protected routes require a valid JWT Bearer token in the `Authorization` hea
 | `FROM_EMAIL` | No | Sender address for system emails |
 | `FROM_NAME` | No | Display name for system emails |
 | `GOOGLE_CLIENT_ID` | No | Google OAuth 2.0 client ID for SSO |
+| `REDIS_URL` | No | Redis connection URL. Omit to disable price caching (Markets page still works via yfinance). |
+| `CELERY_BROKER_URL` | No | Celery task broker URL (defaults to Redis) |
+| `CELERY_RESULT_BACKEND` | No | Celery result backend URL (defaults to Redis) |
 
 ### Frontend (`frontend/.env`)
 

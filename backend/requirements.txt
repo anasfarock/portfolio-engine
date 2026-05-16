@@ -11,3 +11,6 @@ python-multipart
 python-dotenv
 reportlab
 google-auth
+redis
+celery
+yfinance

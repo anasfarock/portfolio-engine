@@ -13,6 +13,7 @@ import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
 import TradeHistory from './components/portfolio/TradeHistory';
+import Markets from './pages/Markets';
 import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -345,6 +346,7 @@ function App() {
             </ProtectedRoute>
           }>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/markets" element={<Markets />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/api-keys" element={<ApiKeys />} />
             <Route path="/settings" element={<Settings />} />
