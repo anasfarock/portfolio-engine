@@ -479,4 +479,6 @@ All protected routes require a valid JWT Bearer token in the `Authorization` hea
 
 ## License
 
-This project is developed as a Final Year Project at SZABIST University, Islamabad. All rights reserved.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+ 
+Developed as a Final Year Project at SZABIST University, Islamabad.
