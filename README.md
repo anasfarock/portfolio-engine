@@ -151,3 +151,91 @@ Frontend runs at → `http://localhost:5173`
 - **24h Return** — unrealized return percentage
 
 Use the **🏦 Accounts** dropdown to filter the holdings table and trade history by specific accounts or nicknames.
+
+---
+
+## Implementation Plan
+
+### 1. User Authentication `[x]`
+- Safe login using password encryption
+- Sign up using your email
+- Managing session tokens using JWT
+- Ways to reset and recover your password
+- Multi-factor authentication support
+
+### 2. Profile Management `[x]`
+- Making and changing user profiles
+- Preferences and settings for your portfolio
+- Risk evaluation
+- Managing notification settings
+- Ability to export data
+
+### 3. Multi-Broker Integration `[x]`
+- OAuth 2.0 login with different service providers
+- Safe storage for secret tokens
+- Connecting and disconnecting accounts
+- Updating your portfolio instantly
+- Importing and tracking trading history
+
+### 4. Market Data Pipeline `[ ]`
+- Collecting current price information all at once
+- Using Redis to store data temporarily with time limits
+- Limiting how many requests can be made and putting requests in line
+- Historical data retrieval
+- Keeping track of the difference between ask and bid prices
+
+### 5. News Aggregation Pipeline `[ ]`
+- Gathering financial news from different places
+- Removing duplicate articles and making them consistent
+- Getting stock symbols and industry information
+- Cleaning and preparing text
+- Data will be collected every 30 minutes
+
+### 6. Portfolio Visualization `[ ]`
+- Charts for showing how to spread and allocate your portfolio interactively
+- Comparison view for benchmarks
+- Choose the time period for analysis
+- Charts showing the best and worst contributors
+- Updating data instantly using WebSocket connection
+
+### 7. Sentiment Analysis Module `[ ]`
+- News article sentiment extraction
+- Local LLM processing using Mistral 7B
+- Finding and sorting catalysts
+- Sentiment score measured from 0 to 100
+- Processing in groups for better efficiency
+
+### 8. Technical Analysis Module `[ ]`
+- Calculating RSI, MACD, and Bollinger Bands
+- Calculating average values in simple and advanced ways.
+- Trend identification algorithm
+- Looking at momentum and evaluating it
+- Technical strength aggregation
+
+### 9. Financial Analysis Engine `[ ]`
+- Calculating value measurements
+- Analysis of how well a company makes money
+- Calculating growth measurements
+- Checking the balance sheets
+- Peer comparison analysis
+
+### 10. Portfolio Attribution Engine `[ ]`
+- Brinson-Fachler method for analyzing investment performance
+- Calculating how resources are distributed
+- Calculating the selection effect
+- Examining the way two or more things influence each other
+- Breakdown of attribution by position
+
+### 11. Recommendation Engine `[ ]`
+- Understanding attribution and financial results
+- Finding areas that are underperforming and where there is too much investment
+- Scoring how well things match with current sentiments and trends
+- Clear, evidence-based recommendation generation
+- Short summaries that explain the results of attribution
+
+### 12. Calendar-Based Analysis `[ ]`
+- Daily profit and loss calendar for each trading day
+- Cells marked with colors showing profit and loss
+- Break down how much each position contributes every day
+- Monthly and weekly summary reports
+- Calendar reports you can export for keeping a personal journal
