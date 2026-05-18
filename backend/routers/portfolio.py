@@ -128,3 +128,123 @@ def get_transactions(
         txs_with_nicknames.append(tx_resp)
         
     return txs_with_nicknames
+
+@router.get("/analytics/allocation")
+def get_allocation(
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    """Returns portfolio allocation grouped by asset class and sector."""
+    assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
+    
+    asset_class_alloc = {}
+    sector_alloc = {}
+    
+    from services.news_service import TICKER_MAP
+    
+    for a in assets:
+        qty = float(a.quantity) if a.quantity else 0.0
+        price = float(a.current_price) if a.current_price else 0.0
+        value = qty * price
+        
+        if value <= 0:
+            continue
+            
+        ac = a.asset_class or "Unknown"
+        asset_class_alloc[ac] = asset_class_alloc.get(ac, 0) + value
+        
+        # Sector
+        clean_symbol = a.symbol.replace('-USD', '').replace('=X', '')
+        sector = TICKER_MAP.get(clean_symbol, "Other")
+        if ac == "Crypto":
+            sector = "Crypto"
+            
+        sector_alloc[sector] = sector_alloc.get(sector, 0) + value
+        
+    return {
+        "by_asset_class": [{"name": k, "value": round(v, 2)} for k, v in asset_class_alloc.items()],
+        "by_sector": [{"name": k, "value": round(v, 2)} for k, v in sector_alloc.items()]
+    }
+
+@router.get("/analytics/performance")
+def get_performance(
+    period: str, # e.g. "1mo", "3mo", "1y", "ytd"
+    current_user: Annotated[models.User, Depends(get_current_user)],
+    db: db_dependency
+):
+    """
+    Returns historical backcasted performance of the current portfolio vs. SPY.
+    """
+    assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
+    if not assets:
+        return {"data": []}
+        
+    # Build list of tickers and their quantities
+    portfolio = {}
+    for a in assets:
+        qty = float(a.quantity) if a.quantity else 0.0
+        if qty > 0:
+            portfolio[a.symbol] = portfolio.get(a.symbol, 0) + qty
+            
+    if not portfolio:
+        return {"data": []}
+        
+    import yfinance as yf
+    import pandas as pd
+    
+    symbols = list(portfolio.keys())
+    # Ensure SPY is fetched for benchmark
+    if "SPY" not in symbols:
+        symbols_to_fetch = symbols + ["SPY"]
+    else:
+        symbols_to_fetch = symbols
+        
+    try:
+        # download returns a DataFrame where columns are multi-index (Price, Ticker) if multiple tickers
+        df = yf.download(symbols_to_fetch, period=period, progress=False)
+        if df.empty:
+            return {"data": []}
+            
+        # Extract 'Close' prices
+        if "Close" in df.columns.levels[0] if isinstance(df.columns, pd.MultiIndex) else False:
+             data = df["Close"]
+        elif "Close" in df.columns:
+             # Single ticker case
+             data = pd.DataFrame(df["Close"])
+             data.columns = symbols_to_fetch
+        else:
+             data = df
+             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch historical data: {str(e)}")
+        
+    if data.empty:
+        return {"data": []}
+        
+    # Forward fill missing days, then fillna with 0
+    data = data.ffill().fillna(0)
+    
+    # Calculate daily portfolio value
+    portfolio_value = pd.Series(0.0, index=data.index)
+    for sym, qty in portfolio.items():
+        if sym in data.columns:
+            portfolio_value += data[sym] * qty
+            
+    benchmark_value = data["SPY"] if "SPY" in data.columns else pd.Series(0.0, index=data.index)
+    
+    # Normalize benchmark to start at the same value as the portfolio
+    if not portfolio_value.empty and not benchmark_value.empty and benchmark_value.iloc[0] > 0:
+        multiplier = portfolio_value.iloc[0] / benchmark_value.iloc[0]
+        benchmark_value = benchmark_value * multiplier
+        
+    # Build response
+    result = []
+    for date, p_val, b_val in zip(data.index, portfolio_value, benchmark_value):
+        result.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "portfolio": round(float(p_val), 2),
+            "benchmark": round(float(b_val), 2)
+        })
+        
+    return {"data": result}
+

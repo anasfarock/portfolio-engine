@@ -15,6 +15,10 @@ import AssetTable from './components/portfolio/AssetTable';
 import TradeHistory from './components/portfolio/TradeHistory';
 import Markets from './pages/Markets';
 import News from './pages/News';
+import AllocationChart from './components/portfolio/AllocationChart';
+import PerformanceChart from './components/portfolio/PerformanceChart';
+import TopContributors from './components/portfolio/TopContributors';
+import TopHoldings from './components/portfolio/TopHoldings';
 import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -299,6 +303,17 @@ function Dashboard() {
             <p className={`text-3xl font-black mt-2 ${filteredSummary.day_return_perc >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {loading ? "..." : `${filteredSummary.day_return_perc > 0 ? '+' : ''}${filteredSummary.day_return_perc.toFixed(2)}%`}
             </p>
+          </div>
+        </div>
+      )}
+
+      {prefs.default_view !== 'holdings' && (
+        <div className="mt-8 flex flex-col gap-6 relative z-0">
+          <PerformanceChart refreshTrigger={loading} />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+             <AllocationChart refreshTrigger={loading} />
+             <TopContributors assets={filteredAssets} />
+             <TopHoldings assets={filteredAssets} />
           </div>
         </div>
       )}
