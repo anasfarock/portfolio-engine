@@ -11,6 +11,7 @@ A full-stack multi-broker portfolio intelligence platform built with **React (Vi
 - 🏦 **Multi-Broker Hub** — connect Alpaca and Binance accounts into one unified interface.
 - 🔐 **Dual-Layer Security** — Two-Factor Authentication (MFA) and Fernet AES-256 API secret encryption.
 - 📡 **Live Markets Page** — real-time price quotes for Stocks, Crypto, and Forex with 10s auto-refresh, top gainers/losers, and symbol search.
+- 📰 **Financial News Aggregation** — aggregates and deduplicates articles from multiple free RSS sources across sectors, with ticker tagging and 30-min auto-refresh.
 - 🤖 **AI-Powered Insights** — AI recommendations engine synthesizes attribution, sentiment, and financial signals into actionable portfolio guidance.
 - 📈 **Portfolio Attribution** — Brinson-Fachler methodology decomposes returns into allocation and selection effects.
 - 🗓️ **Calendar P&L View** — heatmap-style daily profit/loss calendar for trade journaling and pattern recognition.
@@ -355,12 +356,13 @@ A heatmap-style daily P&L calendar showing gain/loss for every trading day at a 
 - Bid-ask spread tracking
 - Dedicated **Markets** page with Stocks, Crypto & Forex watchlists, top gainers/losers, and 10s auto-refresh
 
-### 5. News Aggregation Pipeline `[ ]`
-- Fetching from 100+ financial RSS sources
-- Article deduplication and normalization
-- Ticker and sector entity extraction
-- Text cleaning and preprocessing
+### 5. News Aggregation Pipeline `[x]`
+- Fetching from multiple financial RSS sources (Yahoo, CoinDesk, CNBC, etc.)
+- Article deduplication and normalization via URL hashing
+- Ticker and sector entity extraction using regex mapping
+- Text cleaning and preprocessing (HTML stripping)
 - Scheduled fetching every 30 minutes via Celery
+- Dedicated **News** page with grid layout, sector filtering, and manual "Sync Now"
 
 ### 6. Portfolio Visualization `[ ]`
 - Interactive allocation and sector distribution charts (Recharts)
@@ -433,11 +435,14 @@ portfolio-engine/
 │   ├── routers/
 │   │   ├── brokers.py           # Broker management routes
 │   │   ├── portfolio.py         # Portfolio data routes
-│   │   └── market.py            # Market data & quotes routes
+│   │   ├── market.py            # Market data & quotes routes
+│   │   └── news.py              # News aggregation routes
 │   ├── services/
-│   │   └── market_data.py       # Redis cache + yfinance price engine
+│   │   ├── market_data.py       # Redis cache + yfinance price engine
+│   │   └── news_service.py      # RSS feed fetching & deduplication
 │   ├── tasks/
-│   │   └── market_tasks.py      # Celery background price refresh task
+│   │   ├── market_tasks.py      # Celery background price refresh task
+│   │   └── news_tasks.py        # Celery background news fetch task
 │   ├── static/                  # Static assets (avatars, etc.)
 │   └── requirements.txt         # Backend dependencies
 │
@@ -448,7 +453,7 @@ portfolio-engine/
     │   ├── components/          # Reusable UI components
     │   ├── contexts/            # React Contexts (Auth, etc.)
     │   ├── hooks/               # Custom React hooks (useMarketData, etc.)
-    │   ├── pages/               # Page components (Login, Dashboard, Markets, etc.)
+    │   ├── pages/               # Page components (Login, Dashboard, Markets, News, etc.)
     │   └── assets/              # Images and icons
     ├── package.json             # Frontend dependencies
     └── vite.config.js           # Vite configuration
