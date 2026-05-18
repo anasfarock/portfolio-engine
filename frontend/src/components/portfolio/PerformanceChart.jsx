@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { RefreshCw, TrendingUp } from 'lucide-react';
@@ -11,6 +11,7 @@ export default function PerformanceChart({ refreshTrigger }) {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('1mo'); // 1mo, 3mo, 1y, ytd
+    const [benchmark, setBenchmark] = useState('SPY');
 
     useEffect(() => {
         if (!token) return;
@@ -19,7 +20,7 @@ export default function PerformanceChart({ refreshTrigger }) {
             setLoading(true);
             try {
                 const res = await axios.get(`${BASE_URL}/portfolio/analytics/performance`, {
-                    params: { period },
+                    params: { period, benchmark },
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setData(res.data.data);
@@ -31,7 +32,7 @@ export default function PerformanceChart({ refreshTrigger }) {
         };
 
         fetchData();
-    }, [token, period, refreshTrigger]);
+    }, [token, period, benchmark, refreshTrigger]);
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -63,19 +64,32 @@ export default function PerformanceChart({ refreshTrigger }) {
                         <TrendingUp className="w-5 h-5 text-primary-500" />
                         Historical Backcast Performance
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">Current holdings back-tested vs SPY benchmark</p>
+                    <p className="text-xs text-gray-500 mt-1">Current holdings back-tested vs benchmark</p>
                 </div>
                 
-                <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex text-sm self-start sm:self-auto">
-                    {['1mo', '3mo', 'ytd', '1y'].map((p) => (
-                        <button 
-                            key={p}
-                            onClick={() => setPeriod(p)}
-                            className={`px-3 py-1 rounded-md font-medium transition-colors uppercase ${period === p ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-                        >
-                            {p}
-                        </button>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <select 
+                        value={benchmark}
+                        onChange={(e) => setBenchmark(e.target.value)}
+                        className="bg-gray-100 dark:bg-gray-800 border-none text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 px-3 py-1.5 cursor-pointer outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                        <option value="SPY">S&P 500 (SPY)</option>
+                        <option value="GC=F">Gold (GC=F)</option>
+                        <option value="BTC-USD">Bitcoin (BTC)</option>
+                        <option value="SI=F">Silver (SI=F)</option>
+                    </select>
+
+                    <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex text-sm">
+                        {['1mo', '3mo', 'ytd', '1y'].map((p) => (
+                            <button 
+                                key={p}
+                                onClick={() => setPeriod(p)}
+                                className={`px-3 py-1 rounded-md font-medium transition-colors uppercase ${period === p ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                            >
+                                {p}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -93,7 +107,7 @@ export default function PerformanceChart({ refreshTrigger }) {
                     </div>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorPortfolio" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
@@ -132,7 +146,7 @@ export default function PerformanceChart({ refreshTrigger }) {
                             <Line 
                                 type="monotone" 
                                 dataKey="benchmark" 
-                                name="SPY Benchmark"
+                                name={`${benchmark} Benchmark`}
                                 stroke="#9CA3AF" 
                                 strokeWidth={2}
                                 strokeDasharray="5 5"
@@ -150,7 +164,7 @@ export default function PerformanceChart({ refreshTrigger }) {
                                 dot={false}
                                 activeDot={{ r: 6, strokeWidth: 0, fill: '#3B82F6' }}
                             />
-                        </AreaChart>
+                        </ComposedChart>
                     </ResponsiveContainer>
                 )}
             </div>

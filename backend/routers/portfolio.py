@@ -170,10 +170,11 @@ def get_allocation(
 def get_performance(
     period: str, # e.g. "1mo", "3mo", "1y", "ytd"
     current_user: Annotated[models.User, Depends(get_current_user)],
-    db: db_dependency
+    db: db_dependency,
+    benchmark: str = "SPY"
 ):
     """
-    Returns historical backcasted performance of the current portfolio vs. SPY.
+    Returns historical backcasted performance of the current portfolio vs. benchmark.
     """
     assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
     if not assets:
@@ -193,9 +194,9 @@ def get_performance(
     import pandas as pd
     
     symbols = list(portfolio.keys())
-    # Ensure SPY is fetched for benchmark
-    if "SPY" not in symbols:
-        symbols_to_fetch = symbols + ["SPY"]
+    # Ensure benchmark is fetched
+    if benchmark not in symbols:
+        symbols_to_fetch = symbols + [benchmark]
     else:
         symbols_to_fetch = symbols
         
@@ -221,8 +222,8 @@ def get_performance(
     if data.empty:
         return {"data": []}
         
-    # Forward fill missing days, then fillna with 0
-    data = data.ffill().fillna(0)
+    # Forward fill missing days, backward fill for start dates (weekends), then fillna with 0
+    data = data.ffill().bfill().fillna(0)
     
     # Calculate daily portfolio value
     portfolio_value = pd.Series(0.0, index=data.index)
@@ -230,7 +231,7 @@ def get_performance(
         if sym in data.columns:
             portfolio_value += data[sym] * qty
             
-    benchmark_value = data["SPY"] if "SPY" in data.columns else pd.Series(0.0, index=data.index)
+    benchmark_value = data[benchmark] if benchmark in data.columns else pd.Series(0.0, index=data.index)
     
     # Normalize benchmark to start at the same value as the portfolio
     if not portfolio_value.empty and not benchmark_value.empty and benchmark_value.iloc[0] > 0:
