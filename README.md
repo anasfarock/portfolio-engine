@@ -364,12 +364,12 @@ A heatmap-style daily P&L calendar showing gain/loss for every trading day at a 
 - Scheduled fetching every 30 minutes via Celery
 - Dedicated **News** page with grid layout, sector filtering, and manual "Sync Now"
 
-### 6. Portfolio Visualization `[ ]`
+### 6. Portfolio Visualization `[x]`
 - Interactive allocation and sector distribution charts (Recharts)
-- Benchmark comparison overlay
-- Time-horizon selector (daily / weekly / monthly / custom)
+- Top holdings concentration risk analysis
+- Historical backcast performance against S&P 500 benchmark
+- Time-horizon selector (1mo / 3mo / ytd / 1y)
 - Top and bottom contributor charts
-- Real-time refresh via WebSocket
 
 ### 7. Sentiment Analysis Module `[ ]`
 - Financial news sentiment extraction
