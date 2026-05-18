@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AvatarDropdown from '../ui/AvatarDropdown';
-import { Activity, BarChart2 } from 'lucide-react';
+import { Activity, BarChart2, Newspaper } from 'lucide-react';
 
 export default function Navbar() {
     const location = useLocation();
     const isMarkets = location.pathname === '/markets';
     const isDashboard = location.pathname === '/dashboard';
+    const isNews = location.pathname === '/news';
 
     return (
         <nav className="bg-white dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 transition-colors duration-300 shadow-sm">
@@ -42,6 +43,16 @@ export default function Navbar() {
                             >
                                 <BarChart2 className="w-4 h-4" />
                                 Markets
+                            </Link>
+                            <Link
+                                to="/news"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                    ${isNews
+                                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                            >
+                                <Newspaper className="w-4 h-4" />
+                                News
                             </Link>
                         </div>
                     </div>

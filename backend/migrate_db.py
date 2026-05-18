@@ -36,6 +36,29 @@ def migrate():
     except Exception as e:
         print(f"❌ Error updating users: {e}")
 
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS news_articles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url_hash VARCHAR UNIQUE NOT NULL,
+                title VARCHAR NOT NULL,
+                summary VARCHAR,
+                source VARCHAR NOT NULL,
+                url VARCHAR NOT NULL,
+                image_url VARCHAR,
+                published_at DATETIME,
+                tickers VARCHAR,
+                sector VARCHAR,
+                fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        print("✅ Created news_articles table.")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_news_articles_url_hash ON news_articles (url_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_news_articles_published_at ON news_articles (published_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_news_articles_sector ON news_articles (sector)")
+    except Exception as e:
+        print(f"❌ Error creating news_articles: {e}")
+
     conn.commit()
     conn.close()
     print("Migration complete!")

@@ -14,6 +14,7 @@ import GlassPanel from './components/ui/GlassPanel';
 import AssetTable from './components/portfolio/AssetTable';
 import TradeHistory from './components/portfolio/TradeHistory';
 import Markets from './pages/Markets';
+import News from './pages/News';
 import { RefreshCw } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -347,6 +348,7 @@ function App() {
           }>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/markets" element={<Markets />} />
+            <Route path="/news" element={<News />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/api-keys" element={<ApiKeys />} />
             <Route path="/settings" element={<Settings />} />

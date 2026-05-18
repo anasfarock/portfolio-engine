@@ -104,3 +104,18 @@ class UserPreferences(Base):
     notify_milestones = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="preferences")
+
+class NewsArticle(Base):
+    __tablename__ = "news_articles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    url_hash = Column(String, unique=True, index=True, nullable=False)
+    title = Column(String, nullable=False)
+    summary = Column(String, nullable=True)
+    source = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    image_url = Column(String, nullable=True)
+    published_at = Column(DateTime, nullable=True, index=True)
+    tickers = Column(String, nullable=True)  # comma separated
+    sector = Column(String, nullable=True, index=True)
+    fetched_at = Column(DateTime, default=datetime.datetime.utcnow)

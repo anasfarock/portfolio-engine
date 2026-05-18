@@ -8,7 +8,7 @@ celery_app = Celery(
     "spaie_worker",
     broker=BROKER,
     backend=BACKEND,
-    include=["tasks.market_tasks"],
+    include=["tasks.market_tasks", "tasks.news_tasks"],
 )
 
 celery_app.conf.update(
@@ -21,6 +21,10 @@ celery_app.conf.update(
         "refresh-price-cache-every-15s": {
             "task": "tasks.market_tasks.refresh_price_cache",
             "schedule": 15.0,  # every 15 seconds
+        },
+        "fetch-news-every-30m": {
+            "task": "tasks.news_tasks.fetch_news",
+            "schedule": 1800.0, # 30 minutes
         },
     },
 )
