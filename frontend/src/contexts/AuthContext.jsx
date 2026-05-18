@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import SessionExpiredModal from '../components/ui/SessionExpiredModal';
 
 const AuthContext = createContext();
 
@@ -13,9 +15,44 @@ export const AuthProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(false);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const [sessionExpired, setSessionExpired] = useState(false);
 
-    // You can set the default base URL for Axios here
-    // axios.defaults.baseURL = 'http://localhost:8000';
+    // Use a ref to avoid the interceptor triggering on auth routes (login, register, etc.)
+    const isAuthRoute = useRef(false);
+
+    // ─── Global 401 interceptor ────────────────────────────────────────────────
+    useEffect(() => {
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                const status = error.response?.status;
+                const url = error.config?.url || '';
+
+                // Ignore 401s from auth endpoints (wrong password etc. are expected there)
+                const isPublicAuthCall =
+                    url.includes('/login') ||
+                    url.includes('/register') ||
+                    url.includes('/auth/google') ||
+                    url.includes('/mfa/verify') ||
+                    url.includes('/forgot-password') ||
+                    url.includes('/reset-password') ||
+                    url.includes('/users/me'); // handled separately in fetchUser
+
+                if (status === 401 && !isPublicAuthCall) {
+                    // Clear session and show expired modal
+                    localStorage.removeItem('access_token');
+                    delete axios.defaults.headers.common['Authorization'];
+                    setToken(null);
+                    setUser(null);
+                    setSessionExpired(true);
+                }
+
+                return Promise.reject(error);
+            }
+        );
+
+        return () => axios.interceptors.response.eject(interceptor);
+    }, []);
 
     const fetchUser = async () => {
         try {
@@ -23,7 +60,6 @@ export const AuthProvider = ({ children }) => {
             setUser(response.data);
         } catch (error) {
             console.error("Failed to fetch user profile", error);
-            // If token is invalid, log out
             if (error.response?.status === 401) {
                 logout();
             }
@@ -49,13 +85,13 @@ export const AuthProvider = ({ children }) => {
             const response = await axios.post('http://localhost:8000/login', { email, password });
             const data = response.data;
 
-            // MFA required — return temp token to Login.jsx for the code step
             if (data.mfa_required) {
                 return { success: false, mfa_required: true, temp_token: data.temp_token };
             }
 
             localStorage.setItem('access_token', data.access_token);
             setToken(data.access_token);
+            setSessionExpired(false);
             return { success: true };
         } catch (error) {
             let errorMsg = error.response?.data?.detail || 'Login failed';
@@ -78,6 +114,7 @@ export const AuthProvider = ({ children }) => {
             const { access_token } = response.data;
             localStorage.setItem('access_token', access_token);
             setToken(access_token);
+            setSessionExpired(false);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.detail || 'Invalid code' };
@@ -96,6 +133,7 @@ export const AuthProvider = ({ children }) => {
             }
             localStorage.setItem('access_token', data.access_token);
             setToken(data.access_token);
+            setSessionExpired(false);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.detail || 'Google Login failed' };
@@ -107,11 +145,7 @@ export const AuthProvider = ({ children }) => {
     const register = async (email, password, full_name) => {
         setLoading(true);
         try {
-            await axios.post('http://localhost:8000/register', {
-                email,
-                password,
-                full_name
-            });
+            await axios.post('http://localhost:8000/register', { email, password, full_name });
             return { success: true, require_verification: true, email: email };
         } catch (error) {
             let errorMsg = error.response?.data?.detail || 'Registration failed';
@@ -145,11 +179,28 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('access_token');
         setToken(null);
+        setSessionExpired(false);
+    };
+
+    // Handler for the "Sign In Again" button on the modal
+    const handleSessionExpiredLogin = () => {
+        setSessionExpired(false);
+        // Redirect to login — use window.location so it works outside Router context
+        window.location.href = '/login';
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, loginWithGoogle, verifyMfa, register, verifyRegistration, logout, loading, isCheckingAuth, refetchUser: fetchUser }}>
+        <AuthContext.Provider value={{
+            user, token, login, loginWithGoogle, verifyMfa,
+            register, verifyRegistration, logout, loading,
+            isCheckingAuth, refetchUser: fetchUser
+        }}>
             {children}
+
+            {/* Session expired overlay — renders on top of any page */}
+            {sessionExpired && (
+                <SessionExpiredModal onLogin={handleSessionExpiredLogin} />
+            )}
         </AuthContext.Provider>
     );
 };

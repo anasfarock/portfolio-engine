@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import {
   TrendingUp, TrendingDown, RefreshCw, Search, BarChart2,
@@ -18,6 +18,10 @@ const CATEGORY_META = {
   crypto: { label: 'Crypto', icon: Bitcoin, color: 'text-amber-500' },
   forex: { label: 'Forex', icon: Globe, color: 'text-emerald-500' },
 };
+
+// Module-level cache — survives page navigation within the same session.
+// Stores { quotes: [], lastUpdated: Date } per tab key.
+const quotesCache = { stocks: null, crypto: null, forex: null };
 
 function formatPrice(price, symbol) {
   if (price === undefined || price === null) return '—';
@@ -90,22 +94,35 @@ function QuoteRow({ quote, isNew }) {
 
 export default function Markets() {
   const [activeTab, setActiveTab] = useState('stocks');
-  const [quotes, setQuotes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Initialise from cache so returning to the page is instant
+  const [quotes, setQuotes] = useState(() => quotesCache['stocks']?.quotes || []);
+  const [loading, setLoading] = useState(() => !quotesCache['stocks']);
+  const [lastUpdated, setLastUpdated] = useState(() => quotesCache['stocks']?.lastUpdated || null);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [newSymbols, setNewSymbols] = useState(new Set());
 
-  const fetchQuotes = useCallback(async (showLoading = false) => {
-    if (showLoading) setLoading(true);
+  // Track the currently active tab in a ref so async fetches can detect stale results
+  const activeTabRef = useRef(activeTab);
+
+  const fetchQuotes = useCallback(async (tab, showLoading = false) => {
+    // Only show the loading skeleton if there's no cached data to show yet
+    if (showLoading && !quotesCache[tab]) setLoading(true);
     setError(null);
     try {
-      const symbols = WATCHLIST[activeTab];
+      const symbols = WATCHLIST[tab];
       const res = await axios.get(`${BASE_URL}/market/quotes`, {
         params: { symbols: symbols.join(',') }
       });
+
+      // Discard result if the user switched tabs while this request was in-flight
+      if (activeTabRef.current !== tab) return;
+
       const incoming = res.data;
+
+      // Persist to module-level cache so navigating back is instant
+      quotesCache[tab] = { quotes: incoming, lastUpdated: new Date() };
 
       // Highlight rows that are freshly fetched (not from cache)
       const freshSet = new Set(
@@ -117,22 +134,39 @@ export default function Markets() {
       setQuotes(incoming);
       setLastUpdated(new Date());
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load market data. Make sure the backend is running.');
+      if (activeTabRef.current === tab) {
+        setError(err.response?.data?.detail || 'Failed to load market data. Make sure the backend is running.');
+      }
     } finally {
-      setLoading(false);
+      if (activeTabRef.current === tab) setLoading(false);
     }
-  }, [activeTab]);
+  }, []);
 
-  // Load on mount and whenever tab changes
+  // When tab changes: show cached data instantly if available, then refresh in background
   useEffect(() => {
-    setQuotes([]);
-    setLoading(true);
-    fetchQuotes(true);
-  }, [activeTab]);
+    activeTabRef.current = activeTab;
+    setSearch('');
+    setError(null);
 
-  // Auto-refresh every 10s
+    const cached = quotesCache[activeTab];
+    if (cached) {
+      // Show cached data immediately — no loading flash
+      setQuotes(cached.quotes);
+      setLastUpdated(cached.lastUpdated);
+      setLoading(false);
+      // Silently refresh in background
+      fetchQuotes(activeTab, false);
+    } else {
+      // No cache yet — show skeleton and fetch
+      setQuotes([]);
+      setLoading(true);
+      fetchQuotes(activeTab, false);
+    }
+  }, [activeTab, fetchQuotes]);
+
+  // Auto-refresh every 30s — always uses the current tab via the ref
   useEffect(() => {
-    const id = setInterval(() => fetchQuotes(false), 10000);
+    const id = setInterval(() => fetchQuotes(activeTabRef.current, false), 30000);
     return () => clearInterval(id);
   }, [fetchQuotes]);
 
@@ -166,7 +200,7 @@ export default function Markets() {
             </span>
           )}
           <button
-            onClick={() => fetchQuotes(true)}
+            onClick={() => fetchQuotes(activeTab, true)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
               text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
           >

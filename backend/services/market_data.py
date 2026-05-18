@@ -14,14 +14,14 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 PRICE_TTL = 15  # seconds before a cached price expires
 
 try:
-    _redis = redis.from_url(REDIS_URL, decode_responses=True)
+    _redis = redis.from_url(REDIS_URL, decode_responses=True, socket_connect_timeout=1)
     _redis.ping()
     REDIS_AVAILABLE = True
-    print("✅ Redis connected successfully")
-except Exception as e:
+    print("✅ Redis connected — price caching enabled")
+except Exception:
     _redis = None
     REDIS_AVAILABLE = False
-    print(f"⚠️  Redis not available — price caching disabled: {e}")
+    # Redis is optional — the app works fine without it using yfinance directly
 
 
 def _cache_key(symbol: str) -> str:
