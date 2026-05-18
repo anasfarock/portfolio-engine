@@ -21,7 +21,7 @@ RSS_SOURCES = {
     "NYT Business": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
     "Financial Times": "https://www.ft.com/?format=rss",
     "MarketWatch": "http://feeds.marketwatch.com/marketwatch/topstories/",
-    "Reuters Business": "https://fetchrss.com/rss/6082b2a68a93f81e3a6c2f526082b2da8a93f8203d6c2f52.xml", # Reuters doesn't have official RSS anymore, this is just a placeholder example if a public one works, or we rely on Yahoo/CNBC/WSJ
+    "Fox Business": "https://moxie.foxbusiness.com/google-publisher/latest.xml",
 }
 
 TICKER_MAP = {
