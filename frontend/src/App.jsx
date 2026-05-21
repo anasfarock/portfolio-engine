@@ -1,25 +1,51 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import ApiKeys from './pages/ApiKeys';
-import Settings from './pages/Settings';
-import ForgotPassword from './pages/ForgotPassword';
-import ChangePassword from './pages/ChangePassword';
+import { RefreshCw } from 'lucide-react';
+
+// Layout shell stays eager — it is always needed for authenticated routes
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import GlassPanel from './components/ui/GlassPanel';
-import AssetTable from './components/portfolio/AssetTable';
-import TradeHistory from './components/portfolio/TradeHistory';
-import Markets from './pages/Markets';
-import News from './pages/News';
-import AllocationChart from './components/portfolio/AllocationChart';
-import PerformanceChart from './components/portfolio/PerformanceChart';
-import TopContributors from './components/portfolio/TopContributors';
-import TopHoldings from './components/portfolio/TopHoldings';
-import { RefreshCw } from 'lucide-react';
+
+// ─── Lazy-loaded pages ────────────────────────────────────────────────────────
+const Login          = lazy(() => import('./pages/Login'));
+const Register       = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const Profile        = lazy(() => import('./pages/Profile'));
+const ApiKeys        = lazy(() => import('./pages/ApiKeys'));
+const Settings       = lazy(() => import('./pages/Settings'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
+const Markets        = lazy(() => import('./pages/Markets'));
+const News           = lazy(() => import('./pages/News'));
+
+// ─── Lazy-loaded dashboard sub-components ────────────────────────────────────
+const AssetTable       = lazy(() => import('./components/portfolio/AssetTable'));
+const TradeHistory     = lazy(() => import('./components/portfolio/TradeHistory'));
+const AllocationChart  = lazy(() => import('./components/portfolio/AllocationChart'));
+const PerformanceChart = lazy(() => import('./components/portfolio/PerformanceChart'));
+const TopContributors  = lazy(() => import('./components/portfolio/TopContributors'));
+const TopHoldings      = lazy(() => import('./components/portfolio/TopHoldings'));
+
+// ─── Shared fallback spinners ─────────────────────────────────────────────────
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Loading…</p>
+      </div>
+    </div>
+  );
+}
+
+function ComponentFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin opacity-70" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { token, loading, isCheckingAuth } = useAuth();
@@ -309,11 +335,19 @@ function Dashboard() {
 
       {prefs.default_view !== 'holdings' && (
         <div className="mt-8 flex flex-col gap-6 relative z-0">
-          <PerformanceChart refreshTrigger={loading} />
+          <Suspense fallback={<ComponentFallback />}>
+            <PerformanceChart refreshTrigger={loading} />
+          </Suspense>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-             <AllocationChart refreshTrigger={loading} />
-             <TopContributors assets={filteredAssets} />
-             <TopHoldings assets={filteredAssets} />
+            <Suspense fallback={<ComponentFallback />}>
+              <AllocationChart refreshTrigger={loading} />
+            </Suspense>
+            <Suspense fallback={<ComponentFallback />}>
+              <TopContributors assets={filteredAssets} loading={loading} />
+            </Suspense>
+            <Suspense fallback={<ComponentFallback />}>
+              <TopHoldings assets={filteredAssets} loading={loading} />
+            </Suspense>
           </div>
         </div>
       )}
@@ -321,11 +355,13 @@ function Dashboard() {
       <div className={`mt-8 ${prefs.default_view === 'holdings' ? 'pt-4' : ''}`}>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Current Holdings</h2>
         <GlassPanel className="overflow-hidden">
-          <AssetTable
-            assets={filteredAssets}
-            onDelete={handleDeleteAsset}
-            loading={loading}
-          />
+          <Suspense fallback={<ComponentFallback />}>
+            <AssetTable
+              assets={filteredAssets}
+              onDelete={handleDeleteAsset}
+              loading={loading}
+            />
+          </Suspense>
         </GlassPanel>
       </div>
 
@@ -333,10 +369,12 @@ function Dashboard() {
         <div className="mt-8 relative z-0">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Trade History</h2>
           <GlassPanel className="overflow-hidden relative z-0">
-            <TradeHistory
-              transactions={filteredTransactions}
-              loading={loading}
-            />
+            <Suspense fallback={<ComponentFallback />}>
+              <TradeHistory
+                transactions={filteredTransactions}
+                loading={loading}
+              />
+            </Suspense>
           </GlassPanel>
         </div>
       )}
@@ -351,9 +389,9 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="/login" element={<AuthRoute><Login /></AuthRoute>} />
-          <Route path="/register" element={<AuthRoute><Register /></AuthRoute>} />
-          <Route path="/forgot-password" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
+          <Route path="/login" element={<AuthRoute><Suspense fallback={<PageFallback />}><Login /></Suspense></AuthRoute>} />
+          <Route path="/register" element={<AuthRoute><Suspense fallback={<PageFallback />}><Register /></Suspense></AuthRoute>} />
+          <Route path="/forgot-password" element={<AuthRoute><Suspense fallback={<PageFallback />}><ForgotPassword /></Suspense></AuthRoute>} />
 
           {/* Protected Routes Wrapper */}
           <Route element={
@@ -362,12 +400,12 @@ function App() {
             </ProtectedRoute>
           }>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/api-keys" element={<ApiKeys />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/markets" element={<Suspense fallback={<PageFallback />}><Markets /></Suspense>} />
+            <Route path="/news" element={<Suspense fallback={<PageFallback />}><News /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<PageFallback />}><Profile /></Suspense>} />
+            <Route path="/api-keys" element={<Suspense fallback={<PageFallback />}><ApiKeys /></Suspense>} />
+            <Route path="/settings" element={<Suspense fallback={<PageFallback />}><Settings /></Suspense>} />
+            <Route path="/change-password" element={<Suspense fallback={<PageFallback />}><ChangePassword /></Suspense>} />
           </Route>
         </Routes>
       </Router>

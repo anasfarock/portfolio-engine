@@ -61,7 +61,7 @@ export default function AllocationChart({ refreshTrigger }) {
         return null;
     };
 
-    if (loading && activeData.length === 0) {
+    if (loading || refreshTrigger) {
         return (
             <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-center h-80">
                 <RefreshCw className="w-6 h-6 text-gray-400 animate-spin" />

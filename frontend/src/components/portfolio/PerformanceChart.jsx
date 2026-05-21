@@ -94,13 +94,11 @@ export default function PerformanceChart({ refreshTrigger }) {
             </div>
 
             <div className="h-80 w-full relative">
-                {loading && (
-                    <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm flex items-center justify-center rounded-xl">
+                {(loading || refreshTrigger) ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
                         <RefreshCw className="w-8 h-8 text-primary-500 animate-spin" />
                     </div>
-                )}
-                
-                {!loading && data.length === 0 ? (
+                ) : data.length === 0 ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
                         <TrendingUp className="w-10 h-10 mb-3 opacity-20" />
                         <p>No historical data available for current holdings</p>

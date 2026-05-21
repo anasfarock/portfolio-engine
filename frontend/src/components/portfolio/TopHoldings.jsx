@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, RefreshCw } from 'lucide-react';
 
-export default function TopHoldings({ assets }) {
+export default function TopHoldings({ assets, loading }) {
     const chartData = useMemo(() => {
         if (!assets || assets.length === 0) return [];
 
@@ -43,6 +43,14 @@ export default function TopHoldings({ assets }) {
         }
         return null;
     };
+
+    if (loading) {
+        return (
+            <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-center h-80 shadow-sm">
+                <RefreshCw className="w-6 h-6 text-gray-400 animate-spin" />
+            </div>
+        );
+    }
 
     if (chartData.length === 0) {
         return (
