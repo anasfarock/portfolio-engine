@@ -90,6 +90,7 @@ export function useHistoricalData(symbol, period = '1mo', interval = '1d') {
 
   useEffect(() => {
     if (!symbol) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     axios
       .get(`${BASE_URL}/market/history/${symbol}`, { params: { period, interval } })

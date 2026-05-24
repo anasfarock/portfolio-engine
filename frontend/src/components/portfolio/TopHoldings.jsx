@@ -2,6 +2,23 @@ import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Briefcase, RefreshCw } from 'lucide-react';
 
+const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
+                <p className="font-bold text-gray-900 dark:text-white mb-1">
+                    {data.symbol}
+                </p>
+                <p className="font-medium text-primary-500">
+                    ${data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function TopHoldings({ assets, loading }) {
     const chartData = useMemo(() => {
         if (!assets || assets.length === 0) return [];
@@ -26,23 +43,6 @@ export default function TopHoldings({ assets, loading }) {
         // Take top 5
         return active.slice(0, 5);
     }, [assets]);
-
-    const CustomTooltip = ({ active, payload }) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            return (
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
-                    <p className="font-bold text-gray-900 dark:text-white mb-1">
-                        {data.symbol}
-                    </p>
-                    <p className="font-medium text-primary-500">
-                        ${data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
 
     if (loading) {
         return (

@@ -2,6 +2,24 @@ import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Trophy, RefreshCw } from 'lucide-react';
 
+const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const isPositive = data.pnl >= 0;
+        return (
+            <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
+                <p className="font-bold text-gray-900 dark:text-white mb-1">
+                    {data.symbol}
+                </p>
+                <p className={`font-medium ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                    {isPositive ? '+' : ''}${data.pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function TopContributors({ assets, loading }) {
     const chartData = useMemo(() => {
         if (!assets || assets.length === 0) return [];
@@ -40,24 +58,6 @@ export default function TopContributors({ assets, loading }) {
 
         return combined;
     }, [assets]);
-
-    const CustomTooltip = ({ active, payload }) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            const isPositive = data.pnl >= 0;
-            return (
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
-                    <p className="font-bold text-gray-900 dark:text-white mb-1">
-                        {data.symbol}
-                    </p>
-                    <p className={`font-medium ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                        {isPositive ? '+' : ''}${data.pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
 
     if (loading) {
         return (

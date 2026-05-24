@@ -27,6 +27,12 @@ const PerformanceChart = lazy(() => import('./components/portfolio/PerformanceCh
 const TopContributors  = lazy(() => import('./components/portfolio/TopContributors'));
 const TopHoldings      = lazy(() => import('./components/portfolio/TopHoldings'));
 
+// ─── Lazy-loaded advanced analytics ──────────────────────────────────────────
+const HoldingsTreemap    = lazy(() => import('./components/portfolio/HoldingsTreemap'));
+const PerformanceHeatmap = lazy(() => import('./components/portfolio/PerformanceHeatmap'));
+const RiskReturnScatter  = lazy(() => import('./components/portfolio/RiskReturnScatter'));
+const CorrelationMatrix  = lazy(() => import('./components/portfolio/CorrelationMatrix'));
+
 // ─── Shared fallback spinners ─────────────────────────────────────────────────
 function PageFallback() {
   return (
@@ -348,6 +354,43 @@ function Dashboard() {
             <Suspense fallback={<ComponentFallback />}>
               <TopHoldings assets={filteredAssets} loading={loading} />
             </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* ── Advanced Analytics ── */}
+      {prefs.default_view !== 'holdings' && (
+        <div className="mt-8 flex flex-col gap-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Advanced Analytics</h2>
+          
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Full width */}
+            <div className="xl:col-span-3">
+              <Suspense fallback={<ComponentFallback />}>
+                <PerformanceHeatmap refreshTrigger={loading} />
+              </Suspense>
+            </div>
+            
+            {/* 2/3 width */}
+            <div className="xl:col-span-2">
+              <Suspense fallback={<ComponentFallback />}>
+                <HoldingsTreemap assets={filteredAssets} loading={loading} />
+              </Suspense>
+            </div>
+            
+            {/* 1/3 width */}
+            <div className="xl:col-span-1">
+              <Suspense fallback={<ComponentFallback />}>
+                <RiskReturnScatter refreshTrigger={loading} />
+              </Suspense>
+            </div>
+            
+            {/* Full width */}
+            <div className="xl:col-span-3">
+              <Suspense fallback={<ComponentFallback />}>
+                <CorrelationMatrix refreshTrigger={loading} />
+              </Suspense>
+            </div>
           </div>
         </div>
       )}
