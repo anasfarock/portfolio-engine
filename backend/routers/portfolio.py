@@ -202,8 +202,9 @@ def get_performance(
         symbols_to_fetch = yf_symbols
         
     try:
+        yf_period = "5d" if period == "1w" else period
         # download returns a DataFrame where columns are multi-index (Price, Ticker) if multiple tickers
-        df = yf.download(symbols_to_fetch, period=period, progress=False)
+        df = yf.download(symbols_to_fetch, period=yf_period, progress=False)
         if df.empty:
             return {"data": []}
             
@@ -326,7 +327,8 @@ def get_heatmap(
     import pandas as pd
 
     try:
-        raw = yf.download(yf_symbols, period=period, progress=False)
+        yf_period = "5d" if period == "1w" else period
+        raw = yf.download(yf_symbols, period=yf_period, progress=False)
         if raw.empty:
             return {"data": [], "symbols": []}
 
@@ -410,7 +412,8 @@ def get_risk_return(
     import pandas as pd
 
     try:
-        raw = yf.download(yf_symbols, period=period, progress=False)
+        yf_period = "5d" if period == "1w" else period
+        raw = yf.download(yf_symbols, period=yf_period, progress=False)
         if raw.empty:
             return []
 
@@ -469,7 +472,8 @@ def get_correlation(
     import pandas as pd
 
     try:
-        raw = yf.download(yf_symbols, period=period, progress=False)
+        yf_period = "5d" if period == "1w" else period
+        raw = yf.download(yf_symbols, period=yf_period, progress=False)
         if raw.empty:
             return {"symbols": list(mapping.values()), "matrix": []}
 
