@@ -194,12 +194,12 @@ def get_performance(
     import yfinance as yf
     import pandas as pd
     
-    symbols = list(portfolio.keys())
+    yf_symbols, mapping = _map_symbols_for_yf(assets)
     # Ensure benchmark is fetched
-    if benchmark not in symbols:
-        symbols_to_fetch = symbols + [benchmark]
+    if benchmark not in yf_symbols:
+        symbols_to_fetch = list(set(yf_symbols + [benchmark]))
     else:
-        symbols_to_fetch = symbols
+        symbols_to_fetch = yf_symbols
         
     try:
         # download returns a DataFrame where columns are multi-index (Price, Ticker) if multiple tickers
@@ -207,15 +207,9 @@ def get_performance(
         if df.empty:
             return {"data": []}
             
-        # Extract 'Close' prices
-        if "Close" in df.columns.levels[0] if isinstance(df.columns, pd.MultiIndex) else False:
-             data = df["Close"]
-        elif "Close" in df.columns:
-             # Single ticker case
-             data = pd.DataFrame(df["Close"])
-             data.columns = symbols_to_fetch
-        else:
-             data = df
+        data = _extract_close(df, symbols_to_fetch)
+        # Rename crypto tickers back to normal
+        data = data.rename(columns=mapping)
              
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch historical data: {str(e)}")
@@ -254,6 +248,36 @@ def get_performance(
 # ─────────────────────────────────────────────────────────────────────────────
 # Shared helpers for analytics endpoints
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _map_symbols_for_yf(assets: List[models.Asset]) -> tuple[List[str], dict]:
+    """Returns a list of yf_symbols and a mapping from yf_symbol back to original_symbol."""
+    yf_symbols = []
+    mapping = {}
+    
+    # Specific Yahoo Finance IDs for cryptos with colliding or unknown tickers
+    crypto_map = {
+        "PEPE": "PEPE24478-USD",
+        "PORTAL": "PORTAL29555-USD",
+        "TRUMP": "MAGATRUMP-USD",
+        "PENGU": "PEFI-USD",
+        "SUI": "SUI20947-USD",
+        "FLOKI": "DOFI-USD",
+    }
+    
+    for a in assets:
+        if float(a.quantity or 0) <= 0:
+            continue
+        sym = a.symbol
+        ac = a.asset_class or ""
+        
+        if ac.lower() == "crypto":
+            yf_sym = crypto_map.get(sym, f"{sym}-USD" if not sym.endswith("-USD") else sym)
+        else:
+            yf_sym = sym
+            
+        yf_symbols.append(yf_sym)
+        mapping[yf_sym] = sym
+    return list(set(yf_symbols)), mapping
 
 def _extract_close(raw, symbols):
     """Return a DataFrame of Close prices with symbol names as columns."""
@@ -294,19 +318,21 @@ def get_heatmap(
     if not assets:
         return {"data": [], "symbols": []}
 
-    symbols = list({a.symbol for a in assets if float(a.quantity or 0) > 0})
-    if not symbols:
+    yf_symbols, mapping = _map_symbols_for_yf(assets)
+    if not yf_symbols:
         return {"data": [], "symbols": []}
 
     import yfinance as yf
     import pandas as pd
 
     try:
-        raw = yf.download(symbols if len(symbols) > 1 else symbols[0], period=period, progress=False)
+        raw = yf.download(yf_symbols, period=period, progress=False)
         if raw.empty:
             return {"data": [], "symbols": []}
 
-        close = _extract_close(raw, symbols)
+        close = _extract_close(raw, yf_symbols)
+        close = close.rename(columns=mapping)
+        symbols = list(mapping.values())
         available = [s for s in symbols if s in close.columns]
         if not available:
             return {"data": [], "symbols": []}
@@ -379,16 +405,17 @@ def get_risk_return(
     if not portfolio:
         return []
 
+    yf_symbols, mapping = _map_symbols_for_yf(assets)
     import yfinance as yf
     import pandas as pd
 
-    symbols = list(portfolio.keys())
     try:
-        raw = yf.download(symbols if len(symbols) > 1 else symbols[0], period=period, progress=False)
+        raw = yf.download(yf_symbols, period=period, progress=False)
         if raw.empty:
             return []
 
-        close = _extract_close(raw, symbols)
+        close = _extract_close(raw, yf_symbols)
+        close = close.rename(columns=mapping)
         close = close.dropna(axis=1, how='all')
         daily_ret = close.pct_change().dropna(how='all')
 
@@ -433,20 +460,22 @@ def get_correlation(
 ):
     """Pairwise return correlation matrix — powers the diversification view."""
     assets = db.query(models.Asset).filter(models.Asset.user_id == current_user.id).all()
-    symbols = list({a.symbol for a in assets if float(a.quantity or 0) > 0})
+    yf_symbols, mapping = _map_symbols_for_yf(assets)
 
-    if len(symbols) < 2:
-        return {"symbols": symbols, "matrix": []}
+    if len(yf_symbols) < 2:
+        return {"symbols": list(mapping.values()), "matrix": []}
 
     import yfinance as yf
     import pandas as pd
 
     try:
-        raw = yf.download(symbols, period=period, progress=False)
+        raw = yf.download(yf_symbols, period=period, progress=False)
         if raw.empty:
-            return {"symbols": symbols, "matrix": []}
+            return {"symbols": list(mapping.values()), "matrix": []}
 
-        close = _extract_close(raw, symbols)
+        close = _extract_close(raw, yf_symbols)
+        close = close.rename(columns=mapping)
+        symbols = list(mapping.values())
         available = [s for s in symbols if s in close.columns]
 
         if len(available) < 2:

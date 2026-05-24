@@ -14,7 +14,7 @@ function pnlToFill(pct) {
 
 function TreemapCell(props) {
     const { x, y, width, height, name, pnl_pct, depth } = props;
-    if (depth !== 1 || width < 4 || height < 4) return null;
+    if (depth !== 1 || width < 1 || height < 1) return null;
 
     const fill = pnlToFill(pnl_pct ?? 0);
     const w = Math.max(0, width - 2);
