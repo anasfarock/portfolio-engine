@@ -81,7 +81,33 @@ export default function HoldingsTreemap({ assets, loading }) {
             })
             .filter(d => d.value > 0)
             .sort((a, b) => b.size - a.size);
-        return children.length ? children : null;
+        const totalValue = children.reduce((sum, d) => sum + d.value, 0);
+        const threshold = totalValue * 0.01; // 1% threshold
+        const largeAssets = [];
+        let otherValue = 0;
+        let otherCost = 0;
+
+        children.forEach(d => {
+            if (d.value >= threshold) {
+                largeAssets.push(d);
+            } else {
+                otherValue += d.value;
+                const cost = d.value / (1 + (d.pnl_pct / 100));
+                otherCost += cost;
+            }
+        });
+
+        if (otherValue > 0) {
+            const otherPnl = otherCost > 0 ? ((otherValue - otherCost) / otherCost) * 100 : 0;
+            largeAssets.push({ 
+                name: 'Other', 
+                size: otherValue, 
+                value: otherValue, 
+                pnl_pct: +otherPnl.toFixed(2) 
+            });
+        }
+        
+        return largeAssets.length ? largeAssets : null;
     }, [assets]);
 
     if (loading) return (
@@ -116,7 +142,7 @@ export default function HoldingsTreemap({ assets, loading }) {
                 </div>
             </div>
 
-            <div className="h-64 w-full">
+            <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <Treemap data={treeData} dataKey="size" aspectRatio={16 / 9}
                         content={<TreemapCell />}>

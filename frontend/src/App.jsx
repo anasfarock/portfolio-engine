@@ -371,22 +371,23 @@ function Dashboard() {
               </Suspense>
             </div>
             
-            {/* 2/3 width */}
-            <div className="xl:col-span-2">
+            {/* Full width */}
+            <div className="xl:col-span-3">
               <Suspense fallback={<ComponentFallback />}>
                 <HoldingsTreemap assets={filteredAssets} loading={loading} />
               </Suspense>
             </div>
             
-            {/* 1/3 width */}
-            <div className="xl:col-span-1">
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+            <div className="h-full">
               <Suspense fallback={<ComponentFallback />}>
                 <RiskReturnScatter refreshTrigger={loading} />
               </Suspense>
             </div>
             
-            {/* Full width */}
-            <div className="xl:col-span-3">
+            <div className="h-full">
               <Suspense fallback={<ComponentFallback />}>
                 <CorrelationMatrix refreshTrigger={loading} />
               </Suspense>

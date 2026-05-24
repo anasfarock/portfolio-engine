@@ -117,7 +117,7 @@ export default function RiskReturnScatter({ refreshTrigger }) {
     );
 
     return (
-        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -140,7 +140,7 @@ export default function RiskReturnScatter({ refreshTrigger }) {
                 </div>
             </div>
 
-            <div className="h-64 w-full">
+            <div className="flex-1 w-full min-h-[16rem]">
                 <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 10, right: 24, left: 0, bottom: 28 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />

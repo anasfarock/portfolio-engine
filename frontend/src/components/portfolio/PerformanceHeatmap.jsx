@@ -119,9 +119,9 @@ export default function PerformanceHeatmap({ refreshTrigger }) {
             {/* Grid */}
             <div className="overflow-x-auto -mx-1 px-1">
                 {/* Date labels */}
-                <div className="flex mb-1" style={{ paddingLeft: '4.5rem' }}>
+                <div className="flex mb-1 w-full" style={{ paddingLeft: '4.5rem' }}>
                     {dates.map((d, i) => (
-                        <div key={d} style={{ width: cw, minWidth: cw, flexShrink: 0 }}>
+                        <div key={d} style={{ flex: 1, minWidth: cw, flexShrink: 0 }}>
                             {i % every === 0 && (
                                 <span className="text-[9px] text-gray-400 dark:text-gray-500 block"
                                     style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', lineHeight: 1 }}>
@@ -139,12 +139,12 @@ export default function PerformanceHeatmap({ refreshTrigger }) {
                             title={sym}>
                             {sym.replace('-USD', '').replace('=X', '')}
                         </div>
-                        <div className="flex gap-px">
+                        <div className="flex gap-px flex-1">
                             {dates.map(d => {
                                 const val = cells[sym]?.[d];
                                 return (
                                     <div key={d}
-                                        style={{ width: cw, height: ch, minWidth: cw, background: pctToColor(val), borderRadius: 2 }}
+                                        style={{ flex: 1, height: ch, minWidth: cw, background: pctToColor(val), borderRadius: 2 }}
                                         className="cursor-pointer transition-all hover:brightness-110 hover:ring-1 hover:ring-white hover:z-10"
                                         onMouseEnter={e => {
                                             setMousePos({ x: e.clientX, y: e.clientY });

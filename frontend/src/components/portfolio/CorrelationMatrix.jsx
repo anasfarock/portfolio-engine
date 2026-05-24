@@ -79,7 +79,7 @@ export default function CorrelationMatrix({ refreshTrigger }) {
     );
 
     return (
-        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div>
@@ -104,7 +104,7 @@ export default function CorrelationMatrix({ refreshTrigger }) {
             </div>
 
             {/* Matrix */}
-            <div className="overflow-auto">
+            <div className="flex-1 min-h-[16rem] overflow-auto flex items-center justify-center">
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: `${cellSize + 8}px repeat(${n}, ${cellSize}px)`,
