@@ -81,47 +81,47 @@ export default function EconomicCalendar() {
         <div className="text-center py-20 text-gray-500">No events found for this week.</div>
       )}
 
-      <div className="px-5">
-        {Object.entries(grouped).map(([date, dayEvents]) => (
-          <div key={date} className="mt-6 first:mt-2">
-            <h3 className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-10 py-2.5 text-xs font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1 border-b border-gray-100 dark:border-gray-800">
-              {date}
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead>
-                  <tr className="text-[11px] text-gray-400 uppercase tracking-wider border-b border-gray-50 dark:border-gray-800/50">
-                    <th className="py-2 font-semibold">Time</th>
-                    <th className="py-2 font-semibold">Cur</th>
-                    <th className="py-2 font-semibold">Impact</th>
-                    <th className="py-2 font-semibold">Event</th>
-                    <th className="py-2 font-semibold text-right">Actual</th>
-                    <th className="py-2 font-semibold text-right">Forecast</th>
-                    <th className="py-2 font-semibold text-right hidden sm:table-cell">Previous</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-                  {dayEvents.map(event => {
-                    const isActual = !!event.actual;
-                    return (
-                      <tr key={event.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                        <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap text-xs">{event.time}</td>
-                        <td className="py-2.5 pr-4 font-bold text-gray-900 dark:text-white text-xs">{event.country}</td>
-                        <td className="py-2.5 pr-4"><ImpactBadge impact={event.impact} /></td>
-                        <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300 min-w-[200px]">{event.title}</td>
-                        <td className={`py-2.5 pr-4 text-right font-bold tabular-nums ${isActual ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}>
-                          {event.actual || '—'}
-                        </td>
-                        <td className="py-2.5 pr-4 text-right text-gray-500 dark:text-gray-400 tabular-nums">{event.forecast || '—'}</td>
-                        <td className="py-2.5 text-right text-gray-400 hidden sm:table-cell tabular-nums">{event.previous || '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
+      <div className="px-5 overflow-x-auto pb-4">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="text-[11px] text-gray-400 uppercase tracking-wider border-b border-gray-50 dark:border-gray-800/50">
+              <th className="py-2 pr-4 font-semibold w-16">Time</th>
+              <th className="py-2 pr-4 font-semibold w-12">Cur</th>
+              <th className="py-2 pr-4 font-semibold w-20">Impact</th>
+              <th className="py-2 pr-4 font-semibold min-w-[200px]">Event</th>
+              <th className="py-2 pr-4 font-semibold text-right w-20">Actual</th>
+              <th className="py-2 pr-4 font-semibold text-right w-20">Forecast</th>
+              <th className="py-2 font-semibold text-right hidden sm:table-cell w-20">Previous</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+            {Object.entries(grouped).map(([date, dayEvents]) => (
+              <React.Fragment key={date}>
+                <tr>
+                  <td colSpan="7" className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-10 pt-6 pb-2 text-xs font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
+                    {date}
+                  </td>
+                </tr>
+                {dayEvents.map(event => {
+                  const isActual = !!event.actual;
+                  return (
+                    <tr key={event.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                      <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 whitespace-nowrap text-xs">{event.time}</td>
+                      <td className="py-2.5 pr-4 font-bold text-gray-900 dark:text-white text-xs">{event.country}</td>
+                      <td className="py-2.5 pr-4"><ImpactBadge impact={event.impact} /></td>
+                      <td className="py-2.5 pr-4 text-gray-700 dark:text-gray-300 break-words">{event.title}</td>
+                      <td className={`py-2.5 pr-4 text-right font-bold tabular-nums whitespace-nowrap ${isActual ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}>
+                        {event.actual || '—'}
+                      </td>
+                      <td className="py-2.5 pr-4 text-right text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">{event.forecast || '—'}</td>
+                      <td className="py-2.5 text-right text-gray-400 hidden sm:table-cell tabular-nums whitespace-nowrap">{event.previous || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
