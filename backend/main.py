@@ -229,15 +229,29 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, background_tasks: Ba
     Generate a 6-digit OTP password reset token for the given email and send it.
     """
     db_user = db.query(models.User).filter(models.User.email == payload.email).first()
-    if db_user:
-        otp = f"{secrets.randbelow(1000000):06d}"
-        db_user.password_reset_token = otp
-        db_user.password_reset_expires = dt.datetime.utcnow() + dt.timedelta(minutes=30)
-        db.commit()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Email not registered. Please register first.")
         
-        background_tasks.add_task(email_service.send_password_reset_otp, db_user.email, otp)
+    otp = f"{secrets.randbelow(1000000):06d}"
+    db_user.password_reset_token = otp
+    db_user.password_reset_expires = dt.datetime.utcnow() + dt.timedelta(minutes=30)
+    db.commit()
+    
+    background_tasks.add_task(email_service.send_password_reset_otp, db_user.email, otp)
         
-    return {"message": "If this email is registered, a reset code has been sent."}
+    return {"message": "A reset code has been sent to your email."}
+
+@app.post("/auth/verify-reset-token")
+def verify_reset_token(payload: schemas.VerifyResetTokenRequest, db: db_dependency):
+    """Verify that the provided OTP token is valid and not expired."""
+    import datetime as dt
+    db_user = db.query(models.User).filter(models.User.password_reset_token == payload.token).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification code.")
+    if db_user.password_reset_expires and db_user.password_reset_expires < dt.datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
+        
+    return {"message": "Verification code is valid."}
 
 @app.post("/auth/reset-password")
 def reset_password(payload: schemas.ResetPasswordRequest, db: db_dependency):
