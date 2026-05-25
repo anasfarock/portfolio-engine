@@ -228,13 +228,13 @@ export default function Markets() {
         params: { symbols: symbols.join(',') }
       });
 
-      // Discard result if the user switched tabs while this request was in-flight
-      if (activeTabRef.current !== tab) return;
-
       const incoming = res.data;
 
       // Persist to module-level cache so navigating back is instant
       quotesCache[tab] = { quotes: incoming, lastUpdated: new Date() };
+
+      // Discard state updates if the user switched tabs while this request was in-flight
+      if (activeTabRef.current !== tab) return;
 
       // Highlight rows that are freshly fetched (not from cache)
       const freshSet = new Set(
@@ -275,6 +275,16 @@ export default function Markets() {
       fetchQuotes(activeTab, false);
     }
   }, [activeTab, fetchQuotes]);
+
+  // Pre-fetch all tabs in the background on initial mount to make tab switching instant
+  useEffect(() => {
+    ['stocks', 'crypto', 'forex'].forEach(tab => {
+      // Fetch if it's not the active one (which is already handled) and not yet cached
+      if (tab !== activeTabRef.current && !quotesCache[tab]) {
+        fetchQuotes(tab, false);
+      }
+    });
+  }, [fetchQuotes]);
 
   // Auto-refresh every 30s — always uses the current tab via the ref
   useEffect(() => {
