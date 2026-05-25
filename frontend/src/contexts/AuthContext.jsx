@@ -79,6 +79,12 @@ export const AuthProvider = ({ children }) => {
         }
     }, [token]);
 
+    const triggerNewsRefresh = (accessToken) => {
+        axios.post('http://localhost:8000/news/refresh', {}, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        }).catch(e => console.error('Background news refresh failed', e));
+    };
+
     const login = async (email, password) => {
         setLoading(true);
         try {
@@ -92,6 +98,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('access_token', data.access_token);
             setToken(data.access_token);
             setSessionExpired(false);
+            triggerNewsRefresh(data.access_token);
             return { success: true };
         } catch (error) {
             let errorMsg = error.response?.data?.detail || 'Login failed';
@@ -115,6 +122,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('access_token', access_token);
             setToken(access_token);
             setSessionExpired(false);
+            triggerNewsRefresh(access_token);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.detail || 'Invalid code' };
@@ -134,6 +142,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('access_token', data.access_token);
             setToken(data.access_token);
             setSessionExpired(false);
+            triggerNewsRefresh(data.access_token);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.response?.data?.detail || 'Google Login failed' };
