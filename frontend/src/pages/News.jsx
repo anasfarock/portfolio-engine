@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Newspaper, Search, Filter, RefreshCw, ExternalLink, Clock, Tag } from 'lucide-react';
+import { Newspaper, Search, Filter, RefreshCw, ExternalLink, Clock, Tag, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import EconomicCalendar from '../components/news/EconomicCalendar';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -17,6 +18,7 @@ const newsCache = {
 
 export default function News() {
   const { token } = useAuth();
+  const [activeTab, setActiveTab] = useState('news');
   
   // Initialize from cache
   const [articles, setArticles] = useState(() => newsCache.articles);
@@ -165,7 +167,35 @@ export default function News() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Tabs */}
+      <div className="flex border-b border-gray-100 dark:border-gray-800 mb-6">
+        <button
+          onClick={() => setActiveTab('news')}
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+            activeTab === 'news'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+          }`}
+        >
+          <Newspaper className="w-4 h-4" />
+          News Feed
+        </button>
+        <button
+          onClick={() => setActiveTab('calendar')}
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+            activeTab === 'calendar'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          Economic Calendar
+        </button>
+      </div>
+
+      {activeTab === 'news' ? (
+        <>
+          {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-900/60 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mr-2">
           <Filter className="w-4 h-4" /> Filters
@@ -311,6 +341,10 @@ export default function News() {
             </div>
           )}
         </>
+      )}
+        </>
+      ) : (
+        <EconomicCalendar />
       )}
     </div>
   );
