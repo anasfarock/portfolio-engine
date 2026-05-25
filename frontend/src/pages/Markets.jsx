@@ -4,6 +4,7 @@ import {
   TrendingUp, TrendingDown, RefreshCw, Search, BarChart2,
   Bitcoin, DollarSign, Globe, ChevronUp, ChevronDown, Minus
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -52,48 +53,159 @@ function ChangeBadge({ pct }) {
   );
 }
 
-function QuoteRow({ quote, isNew }) {
+function ExpandedRowContent({ symbol }) {
+  const [history, setHistory] = useState([]);
+  const [spread, setSpread] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchDetailedData = async () => {
+      setLoading(true);
+      try {
+        const [histRes, spreadRes] = await Promise.all([
+          axios.get(`${BASE_URL}/market/history/${symbol}?period=1mo&interval=1d`),
+          axios.get(`${BASE_URL}/market/spread/${symbol}`)
+        ]);
+        if (active) {
+          setHistory(histRes.data.candles || []);
+          setSpread(spreadRes.data || null);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchDetailedData();
+    return () => { active = false; };
+  }, [symbol]);
+
+  if (loading) {
+    return <div className="p-8 flex justify-center"><RefreshCw className="w-5 h-5 animate-spin text-gray-400" /></div>;
+  }
+
+  return (
+    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2 h-48">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">30-Day Price History</p>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={history} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <XAxis 
+              dataKey="time" 
+              tickFormatter={(val) => {
+                const d = new Date(val);
+                return `${d.getMonth() + 1}/${d.getDate()}`;
+              }}
+              stroke="#9CA3AF"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              minTickGap={20}
+            />
+            <YAxis 
+              orientation="right"
+              domain={['auto', 'auto']} 
+              tickFormatter={(val) => `$${val < 1 ? Number(val).toFixed(4) : Number(val).toFixed(2)}`}
+              stroke="#9CA3AF"
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={60}
+            />
+            <RechartsTooltip 
+              contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+              labelFormatter={(lbl) => new Date(lbl).toLocaleDateString()}
+              formatter={(val) => [`$${Number(val).toFixed(2)}`, 'Price']}
+            />
+            <Line type="monotone" dataKey="close" stroke="#3B82F6" strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex flex-col justify-center space-y-4 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bid / Ask Spread</p>
+        {spread ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-400">Bid Price</p>
+              <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">${formatPrice(spread.bid, symbol)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Ask Price</p>
+              <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">${formatPrice(spread.ask, symbol)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Spread</p>
+              <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{formatPrice(spread.spread, symbol)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Spread %</p>
+              <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{spread.spread_pct ? spread.spread_pct.toFixed(3) : '0.000'}%</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">Spread data not available from source.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuoteRow({ quote, isNew, isExpanded, onToggle }) {
   const isPos = (quote.change_pct || 0) >= 0;
   return (
-    <tr className={`border-b border-gray-100 dark:border-gray-800 transition-colors duration-300
-      ${isNew ? 'bg-emerald-50/40 dark:bg-emerald-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'}`}>
-      <td className="py-3 px-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold
-            ${isPos ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
-                     : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
-            {formatSymbolName(quote.symbol).slice(0, 2)}
+    <>
+      <tr 
+        onClick={onToggle}
+        className={`border-b border-gray-100 dark:border-gray-800 transition-colors duration-300 cursor-pointer
+        ${isNew ? 'bg-emerald-50/40 dark:bg-emerald-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'}
+        ${isExpanded ? 'bg-gray-50 dark:bg-gray-800/60' : ''}`}>
+        <td className="py-3 px-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold
+              ${isPos ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
+              {formatSymbolName(quote.symbol).slice(0, 2)}
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white text-sm">{formatSymbolName(quote.symbol)}</p>
+              <p className="text-xs text-gray-400">{quote.symbol}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-gray-900 dark:text-white text-sm">{formatSymbolName(quote.symbol)}</p>
-            <p className="text-xs text-gray-400">{quote.symbol}</p>
-          </div>
-        </div>
-      </td>
-      <td className="py-3 px-4 text-right font-mono font-bold text-gray-900 dark:text-white tabular-nums">
-        ${formatPrice(quote.price, quote.symbol)}
-      </td>
-      <td className="py-3 px-4 text-right tabular-nums">
-        <ChangeBadge pct={quote.change_pct} />
-      </td>
-      <td className="py-3 px-4 text-right text-sm text-gray-500 dark:text-gray-400 tabular-nums hidden md:table-cell">
-        {quote.change !== undefined
-          ? <span className={quote.change >= 0 ? 'text-emerald-500' : 'text-red-500'}>
-              {quote.change >= 0 ? '+' : ''}{formatPrice(quote.change, quote.symbol)}
-            </span>
-          : '—'}
-      </td>
-      <td className="py-3 px-4 text-right text-xs text-gray-400 hidden lg:table-cell">
-        {quote.from_cache
-          ? <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-500 dark:text-gray-400">cached</span>
-          : <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 rounded text-emerald-600 dark:text-emerald-400">live</span>}
-      </td>
-    </tr>
+        </td>
+        <td className="py-3 px-4 text-right font-mono font-bold text-gray-900 dark:text-white tabular-nums">
+          ${formatPrice(quote.price, quote.symbol)}
+        </td>
+        <td className="py-3 px-4 text-right tabular-nums">
+          <ChangeBadge pct={quote.change_pct} />
+        </td>
+        <td className="py-3 px-4 text-right text-sm text-gray-500 dark:text-gray-400 tabular-nums hidden md:table-cell">
+          {quote.change !== undefined
+            ? <span className={quote.change >= 0 ? 'text-emerald-500' : 'text-red-500'}>
+                {quote.change >= 0 ? '+' : ''}{formatPrice(quote.change, quote.symbol)}
+              </span>
+            : '—'}
+        </td>
+        <td className="py-3 px-4 text-right text-xs text-gray-400 hidden lg:table-cell">
+          <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-md text-blue-600 dark:text-blue-400 font-medium">
+            Yahoo Finance
+          </span>
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20">
+          <td colSpan={5} className="p-0">
+             <ExpandedRowContent symbol={quote.symbol} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 
 export default function Markets() {
   const [activeTab, setActiveTab] = useState('stocks');
+  const [expandedRow, setExpandedRow] = useState(null);
 
   // Initialise from cache so returning to the page is instant
   const [quotes, setQuotes] = useState(() => quotesCache['stocks']?.quotes || []);
@@ -327,7 +439,13 @@ export default function Markets() {
                   </tr>
                 ) : (
                   filtered.map(q => (
-                    <QuoteRow key={q.symbol} quote={q} isNew={newSymbols.has(q.symbol)} />
+                    <QuoteRow 
+                      key={q.symbol} 
+                      quote={q} 
+                      isNew={newSymbols.has(q.symbol)} 
+                      isExpanded={expandedRow === q.symbol}
+                      onToggle={() => setExpandedRow(prev => prev === q.symbol ? null : q.symbol)}
+                    />
                   ))
                 )}
               </tbody>
