@@ -168,10 +168,10 @@ export default function News() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-100 dark:border-gray-800 mb-6">
+      <div className="flex overflow-x-auto border-b border-gray-100 dark:border-gray-800 mb-6 scrollbar-hide">
         <button
           onClick={() => setActiveTab('news')}
-          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'news'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -182,7 +182,7 @@ export default function News() {
         </button>
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+          className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'calendar'
               ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -274,11 +274,11 @@ export default function News() {
                     <img 
                       src={article.image_url} 
                       alt="" 
-                      className="w-24 h-24 object-cover rounded-xl flex-shrink-0 bg-gray-100 dark:bg-gray-800"
+                      className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl flex-shrink-0 bg-gray-100 dark:bg-gray-800"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center flex-shrink-0 text-gray-400">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center flex-shrink-0 text-gray-400">
                       <Newspaper className="w-8 h-8 opacity-50 mb-1" />
                     </div>
                   )}
@@ -302,7 +302,7 @@ export default function News() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50 flex items-center justify-between">
+                <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-1">
                       <Clock className="w-3.5 h-3.5" />

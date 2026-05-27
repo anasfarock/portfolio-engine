@@ -91,7 +91,7 @@ export default function EconomicCalendar() {
               <th className="py-2 pr-4 font-semibold min-w-[200px]">Event</th>
               <th className="py-2 pr-4 font-semibold text-right w-20">Actual</th>
               <th className="py-2 pr-4 font-semibold text-right w-20">Forecast</th>
-              <th className="py-2 font-semibold text-right hidden sm:table-cell w-20">Previous</th>
+              <th className="py-2 font-semibold text-right w-20">Previous</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
@@ -114,7 +114,7 @@ export default function EconomicCalendar() {
                         {event.actual || '—'}
                       </td>
                       <td className="py-2.5 pr-4 text-right text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">{event.forecast || '—'}</td>
-                      <td className="py-2.5 text-right text-gray-400 hidden sm:table-cell tabular-nums whitespace-nowrap">{event.previous || '—'}</td>
+                      <td className="py-2.5 text-right text-gray-400 tabular-nums whitespace-nowrap">{event.previous || '—'}</td>
                     </tr>
                   );
                 })}

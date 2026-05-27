@@ -86,7 +86,7 @@ function ExpandedRowContent({ symbol }) {
   }
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-2 h-48">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">30-Day Price History</p>
         <ResponsiveContainer width="100%" height="100%">
@@ -125,7 +125,7 @@ function ExpandedRowContent({ symbol }) {
       <div className="flex flex-col justify-center space-y-4 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bid / Ask Spread</p>
         {spread ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div>
               <p className="text-xs text-gray-400">Bid Price</p>
               <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">${formatPrice(spread.bid, symbol)}</p>
@@ -160,33 +160,33 @@ function QuoteRow({ quote, isNew, isExpanded, onToggle }) {
         className={`border-b border-gray-100 dark:border-gray-800 transition-colors duration-300 cursor-pointer
         ${isNew ? 'bg-emerald-50/40 dark:bg-emerald-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'}
         ${isExpanded ? 'bg-gray-50 dark:bg-gray-800/60' : ''}`}>
-        <td className="py-3 px-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold
+        <td className="py-3 px-3 sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-[10px] sm:text-xs font-bold
               ${isPos ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
                        : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
               {formatSymbolName(quote.symbol).slice(0, 2)}
             </div>
             <div>
-              <p className="font-semibold text-gray-900 dark:text-white text-sm">{formatSymbolName(quote.symbol)}</p>
-              <p className="text-xs text-gray-400">{quote.symbol}</p>
+              <p className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm leading-tight sm:leading-normal">{formatSymbolName(quote.symbol)}</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 leading-tight sm:leading-normal">{quote.symbol}</p>
             </div>
           </div>
         </td>
-        <td className="py-3 px-4 text-right font-mono font-bold text-gray-900 dark:text-white tabular-nums">
+        <td className="py-3 px-3 sm:px-4 text-right font-mono font-bold text-gray-900 dark:text-white tabular-nums text-xs sm:text-sm">
           ${formatPrice(quote.price, quote.symbol)}
         </td>
-        <td className="py-3 px-4 text-right tabular-nums">
+        <td className="py-3 px-3 sm:px-4 text-right tabular-nums text-xs sm:text-sm whitespace-nowrap">
           <ChangeBadge pct={quote.change_pct} />
         </td>
-        <td className="py-3 px-4 text-right text-sm text-gray-500 dark:text-gray-400 tabular-nums hidden md:table-cell">
+        <td className="py-3 px-3 sm:px-4 text-right text-sm text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">
           {quote.change !== undefined
             ? <span className={quote.change >= 0 ? 'text-emerald-500' : 'text-red-500'}>
                 {quote.change >= 0 ? '+' : ''}{formatPrice(quote.change, quote.symbol)}
               </span>
             : '—'}
         </td>
-        <td className="py-3 px-4 text-right text-xs text-gray-400 hidden lg:table-cell">
+        <td className="py-3 px-3 sm:px-4 text-right text-xs text-gray-400 whitespace-nowrap">
           <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-md text-blue-600 dark:text-blue-400 font-medium">
             Yahoo Finance
           </span>
@@ -374,7 +374,7 @@ export default function Markets() {
       <div className="bg-white dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
         {/* Tabs + Search bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 pt-4 pb-0 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide w-full sm:w-auto">
             {tabs.map(([key, meta]) => {
               const Icon = meta.icon;
               return (
@@ -432,12 +432,12 @@ export default function Markets() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800/60 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  <th className="text-left py-2.5 px-4 font-semibold">Asset</th>
-                  <th className="text-right py-2.5 px-4 font-semibold">Price</th>
-                  <th className="text-right py-2.5 px-4 font-semibold">24h Change</th>
-                  <th className="text-right py-2.5 px-4 font-semibold hidden md:table-cell">Abs Change</th>
-                  <th className="text-right py-2.5 px-4 font-semibold hidden lg:table-cell">Source</th>
+                <tr className="bg-gray-50 dark:bg-gray-800/60 text-[10px] sm:text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  <th className="text-left py-2.5 px-3 sm:px-4 font-semibold">Asset</th>
+                  <th className="text-right py-2.5 px-3 sm:px-4 font-semibold">Price</th>
+                  <th className="text-right py-2.5 px-3 sm:px-4 font-semibold">24h Change</th>
+                  <th className="text-right py-2.5 px-3 sm:px-4 font-semibold">Abs Change</th>
+                  <th className="text-right py-2.5 px-3 sm:px-4 font-semibold">Source</th>
                 </tr>
               </thead>
               <tbody>

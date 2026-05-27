@@ -59,11 +59,12 @@ export default function CorrelationMatrix({ refreshTrigger }) {
     const { symbols, matrix } = matData;
     const n = symbols.length;
 
-    /* Responsive cell sizing */
-    const cellSize = n <= 4 ? 54 : n <= 7 ? 42 : n <= 10 ? 32 : 24;
-    const fontSize = n <= 4 ? 11 : n <= 7 ? 10 : 9;
-    const labelSize = n <= 7 ? 10 : 9;
-    const showNum = cellSize >= 32;
+    /* Responsive cell sizing - prioritize readability and allow scrolling */
+    const cellSize = n <= 5 ? 54 : n <= 8 ? 42 : 36;
+    const fontSize = n <= 5 ? 12 : 10;
+    const labelSize = 11;
+    const showNum = cellSize >= 36;
+    const rowHeaderWidth = 48;
 
     if (loading || refreshTrigger) return (
         <div className="bg-white dark:bg-gray-900/60 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-center h-80 shadow-sm">
@@ -104,12 +105,13 @@ export default function CorrelationMatrix({ refreshTrigger }) {
             </div>
 
             {/* Matrix */}
-            <div className="flex-1 min-h-[16rem] overflow-auto flex items-center justify-center">
+            <div className="flex-1 min-h-[16rem] overflow-auto pt-2 pb-4">
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: `${cellSize + 8}px repeat(${n}, ${cellSize}px)`,
+                    gridTemplateColumns: `${rowHeaderWidth}px repeat(${n}, ${cellSize}px)`,
                     gap: 3,
-                }}>
+                    width: 'max-content'
+                }} className="md:mx-auto">
                     {/* Top-left corner */}
                     <div />
 
@@ -117,7 +119,7 @@ export default function CorrelationMatrix({ refreshTrigger }) {
                     {symbols.map(s => (
                         <div key={`ch-${s}`}
                             style={{ width: cellSize, textAlign: 'center', fontSize: labelSize }}
-                            className="text-gray-400 dark:text-gray-500 font-bold truncate px-0.5">
+                            className="text-gray-500 dark:text-gray-400 font-bold truncate px-0.5">
                             {labelFor(s)}
                         </div>
                     ))}
@@ -126,8 +128,8 @@ export default function CorrelationMatrix({ refreshTrigger }) {
                     {matrix.map((row, r) => (
                         <React.Fragment key={`row-${symbols[r]}`}>
                             {/* Row header */}
-                            <div style={{ fontSize: labelSize }}
-                                className="text-gray-400 dark:text-gray-500 font-bold text-right flex items-center justify-end pr-1.5 truncate">
+                            <div style={{ fontSize: labelSize, width: rowHeaderWidth }}
+                                className="text-gray-500 dark:text-gray-400 font-bold text-right flex items-center justify-end pr-2 truncate">
                                 {labelFor(symbols[r])}
                             </div>
 
