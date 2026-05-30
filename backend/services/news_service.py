@@ -28,8 +28,20 @@ TICKER_MAP = {
     "AAPL": "Technology", "MSFT": "Technology", "NVDA": "Technology", 
     "AMZN": "Consumer", "GOOGL": "Technology", "TSLA": "Automotive", 
     "META": "Technology", "JPM": "Financial", "V": "Financial", 
-    "WMT": "Retail", "BTC": "Crypto", "ETH": "Crypto", "SOL": "Crypto",
-    "DOGE": "Crypto", "XRP": "Crypto"
+    "WMT": "Retail", 
+    
+    # Base Crypto
+    "BTC": "Crypto", "ETH": "Crypto", "SOL": "Crypto", "DOGE": "Crypto", "XRP": "Crypto",
+    
+    # Crypto Pairs
+    "BTC-USD": "Crypto", "ETH-USD": "Crypto", "SOL-USD": "Crypto", 
+    "BTC/USD": "Crypto", "ETH/USD": "Crypto", "SOL/USD": "Crypto",
+    
+    # Forex Pairs
+    "EUR/USD": "Forex", "GBP/USD": "Forex", "USD/JPY": "Forex", 
+    "AUD/USD": "Forex", "USD/CAD": "Forex", "USD/CHF": "Forex", "NZD/USD": "Forex",
+    "EURUSD=X": "Forex", "GBPUSD=X": "Forex", "USDJPY=X": "Forex",
+    "AUDUSD=X": "Forex", "USDCAD=X": "Forex", "USDCHF=X": "Forex", "NZDUSD=X": "Forex",
 }
 
 def clean_html(text: str) -> str:
@@ -42,11 +54,45 @@ def extract_tickers(text: str) -> list[str]:
     found = set()
     text_upper = text.upper()
     
-    # Common pattern like (NASDAQ: AAPL) or just the ticker in text if it's famous
     for ticker in TICKER_MAP.keys():
-        # Match whole word only
-        if re.search(r'\b' + ticker + r'\b', text_upper):
-            found.add(ticker)
+        escaped_ticker = re.escape(ticker)
+        # Use negative lookarounds to match the ticker as a distinct "word"
+        # Since tickers contain symbols like '-' or '=', \b is unreliable.
+        pattern = r'(?<![A-Z0-9])' + escaped_ticker + r'(?![A-Z0-9])'
+        
+        if re.search(pattern, text_upper):
+            # Normalize variations into a single display format
+            if ticker == "BTC/USD": found.add("BTC-USD")
+            elif ticker == "ETH/USD": found.add("ETH-USD")
+            elif ticker == "SOL/USD": found.add("SOL-USD")
+            elif ticker == "EURUSD=X": found.add("EUR/USD")
+            elif ticker == "GBPUSD=X": found.add("GBP/USD")
+            elif ticker == "USDJPY=X": found.add("USD/JPY")
+            elif ticker == "AUDUSD=X": found.add("AUD/USD")
+            elif ticker == "USDCAD=X": found.add("USD/CAD")
+            elif ticker == "USDCHF=X": found.add("USD/CHF")
+            elif ticker == "NZDUSD=X": found.add("NZD/USD")
+            else: found.add(ticker)
+            
+    # Dynamically find exchange-prefixed tickers (e.g., NASDAQ: TSLA)
+    exchange_matches = re.findall(r'(?:NYSE|NASDAQ|AMEX|BATS)[^A-Z0-9]*([A-Z]{1,5})\b', text_upper)
+    for match in exchange_matches:
+        found.add(match)
+        
+    # Dynamically find Forex/Crypto pairs (e.g., USD/JPY, BTC/USDT)
+    pair_matches = re.findall(r'\b([A-Z]{3,5}/[A-Z]{3,5})\b', text_upper)
+    for match in pair_matches:
+        found.add(match)
+        
+    # Match Common Market Indices
+    if "S&P 500" in text_upper or "S&P500" in text_upper:
+        found.add("SPX")
+    if "DOW JONES" in text_upper or "DJIA" in text_upper:
+        found.add("DJI")
+    if "NASDAQ COMPOSITE" in text_upper or "NASDAQ 100" in text_upper:
+        found.add("NDX")
+    if "VIX" in text_upper:
+        found.add("VIX")
     
     return list(found)
 

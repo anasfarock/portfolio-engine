@@ -20,11 +20,32 @@ from auth import get_db, get_current_user, db_dependency
 import os
 import shutil
 import time
+from contextlib import asynccontextmanager
+import asyncio
+from services.news_service import ingest_articles
 
 # Create tables if they don't exist
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="Portfolio Engine Backend")
+async def background_news_fetch():
+    while True:
+        try:
+            db = database.SessionLocal()
+            try:
+                ingest_articles(db)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"Background news fetch failed: {e}")
+        await asyncio.sleep(1800) # 30 minutes
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(background_news_fetch())
+    yield
+    task.cancel()
+
+app = FastAPI(title="Portfolio Engine Backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
