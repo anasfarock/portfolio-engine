@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { RefreshCw, TrendingUp } from 'lucide-react';
@@ -12,6 +12,7 @@ export default function PerformanceChart({ refreshTrigger }) {
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('1mo'); // 1mo, 3mo, 1y, ytd
     const [benchmark, setBenchmark] = useState('SPY');
+    const [chartType, setChartType] = useState('area'); // area, line, bar
 
     useEffect(() => {
         if (!token) return;
@@ -68,6 +69,16 @@ export default function PerformanceChart({ refreshTrigger }) {
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                    <select 
+                        value={chartType}
+                        onChange={(e) => setChartType(e.target.value)}
+                        className="bg-gray-100 dark:bg-gray-800 border-none text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 px-3 py-1.5 cursor-pointer outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                        <option value="area">Area Chart</option>
+                        <option value="line">Line Chart</option>
+                        <option value="bar">Bar Chart</option>
+                    </select>
+
                     <select 
                         value={benchmark}
                         onChange={(e) => setBenchmark(e.target.value)}
@@ -141,27 +152,58 @@ export default function PerformanceChart({ refreshTrigger }) {
                                 formatter={(value) => <span className="text-gray-600 dark:text-gray-300 font-medium text-sm capitalize">{value}</span>}
                             />
                             
-                            <Line 
-                                type="monotone" 
-                                dataKey="benchmark" 
-                                name={`${benchmark} Benchmark`}
-                                stroke="#9CA3AF" 
-                                strokeWidth={2}
-                                strokeDasharray="5 5"
-                                dot={false} 
-                                activeDot={false}
-                            />
-                            <Area 
-                                type="monotone" 
-                                dataKey="portfolio" 
-                                name="Portfolio"
-                                stroke="#3B82F6" 
-                                strokeWidth={3}
-                                fillOpacity={1} 
-                                fill="url(#colorPortfolio)" 
-                                dot={false}
-                                activeDot={{ r: 6, strokeWidth: 0, fill: '#3B82F6' }}
-                            />
+                            {chartType === 'bar' ? (
+                                <Bar 
+                                    dataKey="benchmark" 
+                                    name={`${benchmark} Benchmark`}
+                                    fill="#9CA3AF"
+                                    radius={[4, 4, 0, 0]}
+                                />
+                            ) : (
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="benchmark" 
+                                    name={`${benchmark} Benchmark`}
+                                    stroke="#9CA3AF" 
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={false} 
+                                    activeDot={false}
+                                />
+                            )}
+
+                            {chartType === 'area' && (
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="portfolio" 
+                                    name="Portfolio"
+                                    stroke="#3B82F6" 
+                                    strokeWidth={3}
+                                    fillOpacity={1} 
+                                    fill="url(#colorPortfolio)" 
+                                    dot={false}
+                                    activeDot={{ r: 6, strokeWidth: 0, fill: '#3B82F6' }}
+                                />
+                            )}
+                            {chartType === 'line' && (
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="portfolio" 
+                                    name="Portfolio"
+                                    stroke="#3B82F6" 
+                                    strokeWidth={3}
+                                    dot={false}
+                                    activeDot={{ r: 6, strokeWidth: 0, fill: '#3B82F6' }}
+                                />
+                            )}
+                            {chartType === 'bar' && (
+                                <Bar 
+                                    dataKey="portfolio" 
+                                    name="Portfolio"
+                                    fill="#3B82F6" 
+                                    radius={[4, 4, 0, 0]}
+                                />
+                            )}
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}
