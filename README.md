@@ -141,8 +141,9 @@ Financial credential safety is a core design principle. See our [Security Policy
 - [Python](https://www.python.org/downloads/) v3.9+
 - [Ollama](https://ollama.com/) (for local Mistral 7B sentiment analysis)
 - PostgreSQL *(optional — SQLite is used automatically as a fallback)*
-- [Redis](https://memurai.com/get-memurai) *(optional — price caching for the Markets page. App works without it but fetches prices live on every request)*
-
+- **Redis** *(optional — price caching for the Markets page. App works without it but fetches prices live on every request)*
+  - **Windows**: Use [Memurai](https://memurai.com/get-memurai) (Redis-compatible). Install via PowerShell: `winget install Memurai.MemuraiDeveloper` or download the MSI directly.
+  - **macOS/Linux**: `brew install redis` or `sudo apt install redis-server`
 ---
 
 ## Getting Started
