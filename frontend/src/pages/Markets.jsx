@@ -64,8 +64,8 @@ function ExpandedRowContent({ symbol }) {
       setLoading(true);
       try {
         const [histRes, spreadRes] = await Promise.all([
-          axios.get(`${BASE_URL}/market/history/${symbol}?period=1mo&interval=1d`),
-          axios.get(`${BASE_URL}/market/spread/${symbol}`)
+          axios.get(`${BASE_URL}/market/history/${symbol}?period=1mo&interval=1d`).catch(err => ({ data: { candles: [] } })),
+          axios.get(`${BASE_URL}/market/spread/${symbol}`).catch(err => ({ data: null }))
         ]);
         if (active) {
           setHistory(histRes.data.candles || []);
