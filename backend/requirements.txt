@@ -15,3 +15,4 @@ redis
 celery
 yfinance
 feedparser
+passlib[bcrypt]
