@@ -476,64 +476,60 @@ export default function Analytics() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-
-        {/* ── Top Header & Symbol Switcher ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900/80 backdrop-blur-md p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800/50">
-                AI Intelligence Engine
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Institutional Intelligence & Analytics
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Deep-dive technical momentum, financial solvency ratios, and local LLM sentiment analysis
-            </p>
-          </div>
-
-          {/* Search Bar, Auto-Sync Status & Refresh Button */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Live Auto-Refresh Status Pill */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/60 text-xs text-gray-500 dark:text-gray-400">
-              <span className="flex h-2 w-2 relative">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isRefreshing ? 'bg-primary-400' : 'bg-emerald-400'} opacity-75`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${isRefreshing ? 'bg-primary-500' : 'bg-emerald-500'}`}></span>
-              </span>
-              <span className="font-semibold text-gray-700 dark:text-gray-300">
-                {isRefreshing ? 'Syncing...' : 'Live Auto-Sync'}
-              </span>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <span className="tabular-nums flex items-center gap-1 text-[11px]">
-                <Clock className="w-3 h-3 text-gray-400" />
-                {getRelativeTime(lastUpdated)}
-              </span>
-            </div>
-
-            <form onSubmit={handleSearch} className="relative min-w-[200px]">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search symbol (e.g. NVDA)..."
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/60 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </form>
-
-            <button
-              onClick={handleManualRefresh}
-              disabled={isRefreshing || tabLoading[activeTab]}
-              className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
-              title="Force Refresh Data (Bypasses Cache)"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary-500' : ''}`} />
-            </button>
-          </div>
+    <div className="space-y-6 pb-10">
+      {/* Page Header matching Markets, News, and Home */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+            <BarChart2 className="w-7 h-7 text-primary-500" />
+            Analytics
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Deep-dive technical momentum, financial solvency ratios, and local LLM sentiment analysis
+          </p>
         </div>
+
+        {/* Header Controls: Live Auto-Sync Status, Search, Refresh */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Live Auto-Refresh Status Pill */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 shadow-sm">
+            <span className="flex h-2 w-2 relative">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isRefreshing ? 'bg-primary-400' : 'bg-emerald-400'} opacity-75`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isRefreshing ? 'bg-primary-500' : 'bg-emerald-500'}`}></span>
+            </span>
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+              {isRefreshing ? 'Syncing...' : 'Live (30s)'}
+            </span>
+            <span className="text-gray-300 dark:text-gray-600">|</span>
+            <span className="tabular-nums flex items-center gap-1 text-[11px]">
+              <Clock className="w-3 h-3 text-gray-400" />
+              {getRelativeTime(lastUpdated)}
+            </span>
+          </div>
+
+          <form onSubmit={handleSearch} className="relative min-w-[200px]">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search symbol (e.g. NVDA)..."
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+            />
+          </form>
+
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing || tabLoading[activeTab]}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+              text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm disabled:opacity-50"
+            title="Force Refresh Data (Bypasses Cache)"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary-500' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
 
         {/* ── Quick Symbol Pills ── */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -1166,7 +1162,6 @@ export default function Analytics() {
           ) : null
         )}
 
-      </div>
     </div>
   );
 }
