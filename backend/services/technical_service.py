@@ -106,7 +106,7 @@ def _determine_trend(close: float, sma20: float, sma50: float, sma200: float | N
     return {"label": label, "score": round(score, 1)}
 
 
-def analyze_symbol_technical(symbol: str) -> dict:
+def analyze_symbol_technical(symbol: str, force_refresh: bool = False) -> dict:
     """
     Computes comprehensive technical indicators, momentum, support/resistance,
     and a unified 0-100 technical strength score for any stock or crypto symbol.
@@ -115,7 +115,7 @@ def analyze_symbol_technical(symbol: str) -> dict:
     cache_key = f"{CACHE_PREFIX}{sym}"
 
     # Check Redis cache
-    if REDIS_AVAILABLE:
+    if REDIS_AVAILABLE and not force_refresh:
         try:
             cached = _redis.get(cache_key)
             if cached:

@@ -12,6 +12,12 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 import models
+from services.market_data import _redis, REDIS_AVAILABLE
+
+SENTIMENT_SUMMARY_CACHE_KEY = "sentiment:summary"
+SENTIMENT_SUMMARY_CACHE_TTL = 120  # 2 minutes
+HOLDING_SENT_CACHE_PREFIX = "sentiment:holding:"
+HOLDING_SENT_CACHE_TTL = 180  # 3 minutes
 
 # Ollama Configuration
 OLLAMA_HOST = os.getenv("OLLAMA_BASE_URL")
@@ -241,10 +247,19 @@ def analyze_unprocessed_news(db: Session, batch_size: int = 10, limit: int = 40)
     return processed_count
 
 
-def get_sentiment_summary(db: Session) -> dict:
+def get_sentiment_summary(db: Session, force_refresh: bool = False) -> dict:
     """
     Returns aggregate sentiment statistics across all analyzed articles.
+    Cached in Redis for high throughput.
     """
+    if REDIS_AVAILABLE and not force_refresh:
+        try:
+            cached = _redis.get(SENTIMENT_SUMMARY_CACHE_KEY)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
+
     # Ensure at least recent articles have sentiment
     analyze_unprocessed_news(db, batch_size=10, limit=30)
 
@@ -316,7 +331,7 @@ def get_sentiment_summary(db: Session) -> dict:
         for a in articles[:15]
     ]
 
-    return {
+    result = {
         "average_score": avg_score,
         "overall_label": overall_label,
         "bullish_count": bullish_count,
@@ -328,12 +343,31 @@ def get_sentiment_summary(db: Session) -> dict:
         "model": OLLAMA_MODEL
     }
 
+    if REDIS_AVAILABLE:
+        try:
+            _redis.setex(SENTIMENT_SUMMARY_CACHE_KEY, SENTIMENT_SUMMARY_CACHE_TTL, json.dumps(result))
+        except Exception:
+            pass
 
-def get_holding_sentiment(symbol: str, db: Session) -> dict:
+    return result
+
+
+def get_holding_sentiment(symbol: str, db: Session, force_refresh: bool = False) -> dict:
     """
     Returns specific sentiment and catalysts tagged for an individual stock/crypto ticker.
+    Cached in Redis for rapid repeated retrieval.
     """
     clean_sym = symbol.upper().replace("-USD", "")
+    cache_key = f"{HOLDING_SENT_CACHE_PREFIX}{clean_sym}"
+
+    if REDIS_AVAILABLE and not force_refresh:
+        try:
+            cached = _redis.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
+
     articles = (
         db.query(models.NewsArticle)
         .filter(models.NewsArticle.tickers.contains(clean_sym))
@@ -343,7 +377,7 @@ def get_holding_sentiment(symbol: str, db: Session) -> dict:
     )
 
     if not articles:
-        return {
+        empty_res = {
             "symbol": symbol,
             "score": 50.0,
             "label": "Neutral",
@@ -351,6 +385,12 @@ def get_holding_sentiment(symbol: str, db: Session) -> dict:
             "catalysts": ["No direct ticker headlines"],
             "recent_headlines": []
         }
+        if REDIS_AVAILABLE:
+            try:
+                _redis.setex(cache_key, HOLDING_SENT_CACHE_TTL, json.dumps(empty_res))
+            except Exception:
+                pass
+        return empty_res
 
     scores = [a.sentiment_score for a in articles if a.sentiment_score is not None]
     if not scores:
@@ -385,7 +425,7 @@ def get_holding_sentiment(symbol: str, db: Session) -> dict:
             "url": a.url
         })
 
-    return {
+    holding_res = {
         "symbol": symbol,
         "score": avg_score,
         "label": label,
@@ -393,3 +433,11 @@ def get_holding_sentiment(symbol: str, db: Session) -> dict:
         "catalysts": list(holding_catalysts)[:5],
         "recent_headlines": headlines[:5]
     }
+
+    if REDIS_AVAILABLE:
+        try:
+            _redis.setex(cache_key, HOLDING_SENT_CACHE_TTL, json.dumps(holding_res))
+        except Exception:
+            pass
+
+    return holding_res

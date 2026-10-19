@@ -116,7 +116,7 @@ def _calculate_health_score(val_dict: dict, prof_dict: dict, growth_dict: dict, 
     return final_score, grade
 
 
-def analyze_symbol_financial(symbol: str) -> dict:
+def analyze_symbol_financial(symbol: str, force_refresh: bool = False) -> dict:
     """
     Extracts fundamental financial metrics, valuation ratios, profitability,
     growth, and balance sheet health for a given equity or crypto symbol.
@@ -124,7 +124,7 @@ def analyze_symbol_financial(symbol: str) -> dict:
     sym = symbol.strip().upper()
     cache_key = f"{CACHE_PREFIX}{sym}"
 
-    if REDIS_AVAILABLE:
+    if REDIS_AVAILABLE and not force_refresh:
         try:
             cached = _redis.get(cache_key)
             if cached:
@@ -254,14 +254,14 @@ def analyze_symbol_financial(symbol: str) -> dict:
         }
 
 
-def get_sector_peers_comparison(symbol: str) -> dict:
+def get_sector_peers_comparison(symbol: str, force_refresh: bool = False) -> dict:
     """
     Compares the target ticker against industry peers across P/E, Margins, and ROE.
     """
     sym = symbol.strip().upper()
     cache_key = f"{PEERS_CACHE_PREFIX}{sym}"
 
-    if REDIS_AVAILABLE:
+    if REDIS_AVAILABLE and not force_refresh:
         try:
             cached = _redis.get(cache_key)
             if cached:

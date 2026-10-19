@@ -6,9 +6,11 @@ and Financial Analysis Engine, plus a 3-in-1 executive overview synthesis.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
+import json
 import database
 from auth import get_current_user
 import models
+from services.market_data import _redis, REDIS_AVAILABLE
 from services.sentiment_service import (
     get_sentiment_summary,
     get_holding_sentiment,
@@ -19,6 +21,9 @@ from services.financial_service import (
     analyze_symbol_financial,
     get_sector_peers_comparison
 )
+
+OVERVIEW_CACHE_PREFIX = "analytics:overview:"
+OVERVIEW_CACHE_TTL = 90  # 90 seconds cache
 
 router = APIRouter(
     prefix="/analytics",
@@ -38,20 +43,20 @@ def get_db():
 # 1. Sentiment Analysis Endpoints
 # -------------------------------------------------------------
 @router.get("/sentiment")
-def get_market_sentiment(db: Session = Depends(get_db)):
+def get_market_sentiment(refresh: bool = False, db: Session = Depends(get_db)):
     """
     Returns general market sentiment score (0-100), bullish/bearish counts,
     top identified catalysts, and recent analyzed news feed.
     """
-    return get_sentiment_summary(db)
+    return get_sentiment_summary(db, force_refresh=refresh)
 
 
 @router.get("/sentiment/{symbol}")
-def get_symbol_sentiment(symbol: str, db: Session = Depends(get_db)):
+def get_symbol_sentiment(symbol: str, refresh: bool = False, db: Session = Depends(get_db)):
     """
     Returns sentiment score and specific catalysts for a target stock or crypto ticker.
     """
-    return get_holding_sentiment(symbol, db)
+    return get_holding_sentiment(symbol, db, force_refresh=refresh)
 
 
 @router.post("/sentiment/process")
@@ -70,12 +75,12 @@ def trigger_sentiment_processing(
 # 2. Technical Analysis Endpoints
 # -------------------------------------------------------------
 @router.get("/technical/{symbol}")
-def get_technical_analysis(symbol: str):
+def get_technical_analysis(symbol: str, refresh: bool = False):
     """
     Computes 14-day RSI, MACD, Bollinger Bands, Moving Averages (SMA/EMA),
     momentum ROC, trend classification, and 0-100 technical strength score.
     """
-    data = analyze_symbol_technical(symbol)
+    data = analyze_symbol_technical(symbol, force_refresh=refresh)
     if "error" in data and "Insufficient" in data["error"]:
         raise HTTPException(status_code=404, detail=data["error"])
     return data
@@ -85,12 +90,12 @@ def get_technical_analysis(symbol: str):
 # 3. Financial Analysis Endpoints
 # -------------------------------------------------------------
 @router.get("/financial/{symbol}")
-def get_financial_analysis(symbol: str):
+def get_financial_analysis(symbol: str, refresh: bool = False):
     """
     Evaluates valuation ratios (P/E, P/B, EV/EBITDA), profitability (ROE, margins),
     growth rates, balance sheet health, and letter grade (A-F).
     """
-    data = analyze_symbol_financial(symbol)
+    data = analyze_symbol_financial(symbol, force_refresh=refresh)
     if "error" in data and not data.get("is_equity"):
         # Return gracefully with error notice
         return data
@@ -98,27 +103,38 @@ def get_financial_analysis(symbol: str):
 
 
 @router.get("/peers/{symbol}")
-def get_peer_comparison(symbol: str):
+def get_peer_comparison(symbol: str, refresh: bool = False):
     """
     Ranks the target ticker against sector peers across P/E, profit margins, and ROE.
     """
-    return get_sector_peers_comparison(symbol)
+    return get_sector_peers_comparison(symbol, force_refresh=refresh)
 
 
 # -------------------------------------------------------------
 # 4. Unified 3-in-1 Executive Overview
 # -------------------------------------------------------------
 @router.get("/overview/{symbol}")
-def get_unified_overview(symbol: str, db: Session = Depends(get_db)):
+def get_unified_overview(symbol: str, refresh: bool = False, db: Session = Depends(get_db)):
     """
     Synthesizes Sentiment, Technical, and Financial analyses into a single 360-degree
     intelligence card with an executive composite recommendation.
+    Cached in Redis for high-speed instant switching.
     """
     sym = symbol.strip().upper()
+    cache_key = f"{OVERVIEW_CACHE_PREFIX}{sym}"
 
-    tech = analyze_symbol_technical(sym)
-    fin = analyze_symbol_financial(sym)
-    sent = get_holding_sentiment(sym, db)
+    # Check Redis cache for instant sub-millisecond retrieval
+    if REDIS_AVAILABLE and not refresh:
+        try:
+            cached = _redis.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
+
+    tech = analyze_symbol_technical(sym, force_refresh=refresh)
+    fin = analyze_symbol_financial(sym, force_refresh=refresh)
+    sent = get_holding_sentiment(sym, db, force_refresh=refresh)
 
     tech_score = tech.get("score", 50.0) if "error" not in tech else 50.0
     fin_score = fin.get("health_score", 50.0)
@@ -144,7 +160,7 @@ def get_unified_overview(symbol: str, db: Session = Depends(get_db)):
         recommendation = "Hold / Neutral"
         rec_color = "blue"
 
-    return {
+    result = {
         "symbol": sym,
         "name": fin.get("name", sym),
         "current_price": tech.get("current_price") or fin.get("current_price"),
@@ -155,13 +171,22 @@ def get_unified_overview(symbol: str, db: Session = Depends(get_db)):
             "score": tech_score,
             "signal": tech.get("signal", "Neutral"),
             "rsi": tech.get("rsi", {}).get("value"),
-            "trend": tech.get("trend", {}).get("label", "Neutral")
+            "rsi_condition": tech.get("rsi", {}).get("condition", "Neutral"),
+            "trend": tech.get("trend", {}).get("label", "Neutral"),
+            "macd_crossover": tech.get("macd", {}).get("crossover", "Neutral"),
+            "support": tech.get("key_levels", {}).get("support"),
+            "resistance": tech.get("key_levels", {}).get("resistance"),
         },
         "financial": {
             "score": fin_score,
             "grade": fin.get("health_grade", "N/A"),
             "pe_ratio": fin.get("valuation", {}).get("trailing_pe"),
-            "net_margin": fin.get("profitability", {}).get("net_margin")
+            "roe": fin.get("profitability", {}).get("roe"),
+            "net_margin": fin.get("profitability", {}).get("net_margin"),
+            "debt_to_equity": fin.get("balance_sheet", {}).get("debt_to_equity"),
+            "sector": fin.get("sector"),
+            "industry": fin.get("industry"),
+            "is_equity": fin.get("is_equity", True),
         },
         "sentiment": {
             "score": sent_score,
@@ -169,3 +194,11 @@ def get_unified_overview(symbol: str, db: Session = Depends(get_db)):
             "catalysts": sent.get("catalysts", [])
         }
     }
+
+    if REDIS_AVAILABLE:
+        try:
+            _redis.setex(cache_key, OVERVIEW_CACHE_TTL, json.dumps(result))
+        except Exception:
+            pass
+
+    return result
