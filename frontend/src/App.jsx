@@ -18,6 +18,7 @@ const Settings       = lazy(() => import('./pages/Settings'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const Markets        = lazy(() => import('./pages/Markets'));
 const News           = lazy(() => import('./pages/News'));
+const Analytics      = lazy(() => import('./pages/Analytics'));
 
 // ─── Lazy-loaded dashboard sub-components ────────────────────────────────────
 const AssetTable       = lazy(() => import('./components/portfolio/AssetTable'));
@@ -445,6 +446,7 @@ function App() {
           }>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/markets" element={<Suspense fallback={<PageFallback />}><Markets /></Suspense>} />
+            <Route path="/analytics" element={<Suspense fallback={<PageFallback />}><Analytics /></Suspense>} />
             <Route path="/news" element={<Suspense fallback={<PageFallback />}><News /></Suspense>} />
             <Route path="/profile" element={<Suspense fallback={<PageFallback />}><Profile /></Suspense>} />
             <Route path="/api-keys" element={<Suspense fallback={<PageFallback />}><ApiKeys /></Suspense>} />

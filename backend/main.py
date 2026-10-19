@@ -573,11 +573,12 @@ def export_user_data_pdf(
         headers={"Content-Disposition": f"attachment; filename=spa_portfolio_export_{date_str}.pdf"}
     )
 
-from routers import brokers, portfolio, market, news
+from routers import brokers, portfolio, market, news, analytics
 
 app.include_router(brokers.router)
 app.include_router(portfolio.router)
 app.include_router(market.router)
 app.include_router(news.router)
+app.include_router(analytics.router)
 
 # Forcing a reload to pick up python-multipart installation

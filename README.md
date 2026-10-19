@@ -411,26 +411,29 @@ A heatmap-style daily P&L calendar showing gain/loss for every trading day at a 
 - Time-horizon selector (1mo / 3mo / ytd / 1y)
 - Top and bottom contributor charts
 
-### 7. Sentiment Analysis Module `[ ]`
+### 7. Sentiment Analysis Module `[x]`
 - Financial news sentiment extraction
-- Local LLM processing via Ollama + Mistral 7B
-- Catalyst identification and classification
-- Sentiment score calculation (0–100 scale)
-- Batch processing for efficiency
+- Local LLM processing via Ollama + Mistral 7B (quantized 4-bit optimized for 8GB GPUs like RTX 2070)
+- High-speed financial NLP fallback engine for zero-setup instant operation
+- Catalyst identification and classification across 7 financial categories
+- Sentiment score calculation (0–100 scale) with Bullish/Bearish/Neutral badges
+- Batch processing for high throughput and low latency
 
-### 8. Technical Analysis Module `[ ]`
-- RSI, MACD, and Bollinger Bands via TA-Lib
-- Simple and exponential moving averages (SMA, EMA)
-- Trend identification algorithm
-- Momentum scoring and evaluation
-- Technical strength aggregation score
+### 8. Technical Analysis Module `[x]`
+- RSI (14-period), MACD (12, 26, 9), and Bollinger Bands (20, 2)
+- Simple and exponential moving averages (SMA 20/50/200, EMA 9/21/50)
+- Trend identification algorithm (Strong/Weak Uptrend/Downtrend, Neutral)
+- Momentum scoring and evaluation (Rate of Change, Stochastic %K/%D)
+- Unified Technical Strength Composite Score (0–100) with actionable signals (Strong Buy/Buy/Hold/Sell/Strong Sell)
+- Dynamic Support and Resistance level estimation
 
-### 9. Financial Analysis Engine `[ ]`
-- Valuation metrics (P/E, P/B, EV/EBITDA)
-- Profitability metrics (ROE, ROA, net margin)
-- Growth metrics computation (YoY revenue, EPS growth)
-- Balance sheet health assessment (debt ratios, liquidity)
-- Peer comparison analysis within sectors
+### 9. Financial Analysis Engine `[x]`
+- Valuation metrics (P/E, Forward P/E, P/B, EV/EBITDA, P/S, PEG)
+- Profitability metrics (ROE, ROA, Gross Margin, Operating Margin, Net Profit Margin)
+- Growth metrics computation (YoY Revenue Growth, Earnings Growth, Forward EPS)
+- Balance sheet health assessment (Debt-to-Equity, Current Ratio, Quick Ratio, Solvency)
+- Sector and industry peer comparison matrix
+- Institutional financial health scoring (0–100) and letter grades (A–F)
 
 ### 10. Portfolio Attribution Engine `[ ]`
 - Brinson-Fachler attribution methodology

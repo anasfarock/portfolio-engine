@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from database import Base
 import datetime
@@ -119,3 +119,10 @@ class NewsArticle(Base):
     tickers = Column(String, nullable=True)  # comma separated
     sector = Column(String, nullable=True, index=True)
     fetched_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Sentiment Analysis Fields
+    sentiment_score = Column(Float, nullable=True)        # 0.0 (extreme bearish) to 100.0 (extreme bullish)
+    sentiment_label = Column(String, nullable=True)       # 'Bullish', 'Bearish', 'Neutral'
+    catalysts = Column(String, nullable=True)             # JSON list of detected catalysts
+    sentiment_reasoning = Column(String, nullable=True)   # Brief reasoning from LLM or NLP engine
+    sentiment_analyzed_at = Column(DateTime, nullable=True)

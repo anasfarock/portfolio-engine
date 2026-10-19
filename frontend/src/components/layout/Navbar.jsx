@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AvatarDropdown from '../ui/AvatarDropdown';
-import { Activity, BarChart2, Newspaper, Menu, X } from 'lucide-react';
+import { Activity, BarChart2, Newspaper, TrendingUp, Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
     { to: '/dashboard', label: 'Dashboard', icon: Activity },
     { to: '/markets',   label: 'Markets',   icon: BarChart2 },
+    { to: '/analytics', label: 'Analytics', icon: TrendingUp },
     { to: '/news',      label: 'News',      icon: Newspaper },
 ];
 
