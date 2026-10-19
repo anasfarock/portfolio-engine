@@ -148,7 +148,46 @@ Financial credential safety is a core design principle. See our [Security Policy
 
 ## Getting Started
 
-### 1. Clone the Repository
+### Quick Start with Docker Compose (Recommended)
+
+The easiest way to run the complete stack (FastAPI backend, React frontend, and Redis cache) together is using Docker Compose.
+
+```bash
+# 1. Start the stack (Frontend + Backend + Redis)
+docker compose up -d
+
+# 2. View live logs (optional)
+docker compose logs -f
+```
+
+- 🖥️ **Frontend**: [http://localhost:5173](http://localhost:5173) (Vite dev server with live Hot Module Reload)
+- ⚙️ **Backend API**: [http://localhost:8000](http://localhost:8000) (FastAPI with auto-reload)
+- 📚 **Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ⚡ **Redis Cache**: `localhost:6379` (active for live price caching)
+
+#### Common Docker Compose Commands:
+```bash
+# Stop all services
+docker compose down
+
+# Rebuild containers after updating dependencies
+docker compose up --build
+
+# Run with Celery background worker & periodic scheduler
+docker compose --profile celery up -d
+
+# Run with PostgreSQL instead of SQLite
+docker compose --profile postgres up -d
+
+# Run optimized production bundle (Nginx + multi-worker Uvicorn)
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+---
+
+### Manual Setup (Without Docker)
+
+#### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/anasfarock/portfolio-engine.git

@@ -47,13 +47,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Portfolio Engine Backend", lifespan=lifespan)
 
+cors_origins_env = os.getenv("CORS_ORIGINS")
+origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] if cors_origins_env else [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:80",
+    "http://localhost:3000",
+    "http://localhost",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health", tags=["Health"])
+def health_check():
+    return {"status": "ok", "service": "portfolio-engine-backend"}
 
 # Mount static directory for avatars
 os.makedirs("static/avatars", exist_ok=True)

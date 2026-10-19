@@ -18,6 +18,59 @@ def generate_signature(query_string: str, api_secret: str) -> str:
         hashlib.sha256
     ).hexdigest()
 
+def get_server_time_offset(base_endpoint: str) -> int:
+    """
+    Fetches Binance server time (/api/v3/time) and calculates the clock offset
+    relative to the local system clock in milliseconds.
+    offset = server_time - local_time
+    Adjusted timestamp = local_time + offset
+    """
+    try:
+        res = requests.get(f"{base_endpoint}/api/v3/time", timeout=5)
+        if res.status_code == 200:
+            server_time = res.json().get("serverTime")
+            local_time = int(time.time() * 1000)
+            return server_time - local_time
+    except Exception as e:
+        print(f"[binance_sync] Failed to fetch server time: {e}")
+    return 0
+
+def make_signed_request(
+    base_endpoint: str,
+    path: str,
+    params: dict,
+    api_secret: str,
+    headers: dict,
+    time_offset: int = 0
+) -> tuple[requests.Response, int]:
+    """
+    Executes a signed Binance API request with synchronized timestamp and recvWindow.
+    Automatically retries once with a fresh server time offset if clock drift error occurs.
+    """
+    current_offset = time_offset
+    for attempt in range(2):
+        synced_timestamp = int(time.time() * 1000) + current_offset
+        request_params = {**params, "timestamp": synced_timestamp, "recvWindow": 60000}
+        query_string = "&".join(f"{k}={v}" for k, v in request_params.items())
+        signature = generate_signature(query_string, api_secret)
+        url = f"{base_endpoint}{path}?{query_string}&signature={signature}"
+
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 400 and attempt == 0:
+            try:
+                err_data = res.json()
+                code = err_data.get("code")
+                msg = err_data.get("msg", "")
+                if code == -1021 or "ahead of the server" in msg or "recvWindow" in msg:
+                    # Clock drift detected: re-fetch exact server offset and retry
+                    current_offset = get_server_time_offset(base_endpoint)
+                    continue
+            except Exception:
+                pass
+        return res, current_offset
+
+    return res, current_offset
+
 def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
     """
     Attempts to sync portfolio balances from Binance Spot Demo API.
@@ -42,14 +95,18 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
     }
     
     try:
+        # Pre-synchronize clock with Binance server to prevent timestamp drift errors
+        time_offset = get_server_time_offset(base_endpoint)
+
         # 1. Fetch Account Balances
-        timestamp = int(time.time() * 1000)
-        query_string = f"timestamp={timestamp}"
-        signature = generate_signature(query_string, api_secret)
-
-        account_url = f"{base_endpoint}/api/v3/account?{query_string}&signature={signature}"
-
-        account_res = requests.get(account_url, headers=headers, timeout=10)
+        account_res, time_offset = make_signed_request(
+            base_endpoint,
+            "/api/v3/account",
+            {},
+            api_secret,
+            headers,
+            time_offset
+        )
         account_res.raise_for_status()
         account_data = account_res.json()
 
@@ -75,11 +132,14 @@ def sync_binance_account(credential_id: int, user_id: int, db: Session) -> dict:
                 continue
             trading_pair = f"{asset_sym}USDT"
             try:
-                ts2 = int(time.time() * 1000)
-                qs2 = f"symbol={trading_pair}&limit=500&timestamp={ts2}"
-                sig2 = generate_signature(qs2, api_secret)
-                trades_url = f"{base_endpoint}/api/v3/myTrades?{qs2}&signature={sig2}"
-                trades_res = requests.get(trades_url, headers=headers, timeout=10)
+                trades_res, time_offset = make_signed_request(
+                    base_endpoint,
+                    "/api/v3/myTrades",
+                    {"symbol": trading_pair, "limit": 500},
+                    api_secret,
+                    headers,
+                    time_offset
+                )
                 if trades_res.status_code != 200:
                     continue
 

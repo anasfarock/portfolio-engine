@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-backend-prod
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+      - path: ./.env
+        required: false
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./backend/portfolio.db:/app/portfolio.db
+      - ./backend/static:/app/static
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - portfolio-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    container_name: portfolio-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - portfolio-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: portfolio-redis-prod
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - portfolio-net
+
+volumes:
+  redis_data:
+
+networks:
+  portfolio-net:
+    driver: bridge

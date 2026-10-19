@@ -1,0 +1,179 @@
+services:
+  # -----------------------------------------------------------
+  # Backend API (FastAPI)
+  # -----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+      - path: ./.env
+        required: false
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      # Live reload for backend development
+      - ./backend:/app
+      - /app/__pycache__
+      # Persist SQLite database and uploaded avatars
+      - ./backend/portfolio.db:/app/portfolio.db
+      - ./backend/static:/app/static
+    command: ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - portfolio-net
+
+  # -----------------------------------------------------------
+  # Frontend Application (React + Vite)
+  # -----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: portfolio-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - path: ./frontend/.env
+        required: false
+      - path: ./.env
+        required: false
+    volumes:
+      # Live reload for frontend development
+      - ./frontend:/app
+      # Preserve container node_modules from host overwrite
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - portfolio-net
+
+  # -----------------------------------------------------------
+  # Redis (Price Caching & Celery Broker)
+  # -----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: portfolio-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - portfolio-net
+
+  # -----------------------------------------------------------
+  # Optional: Celery Background Worker
+  # Start with: docker compose --profile celery up
+  # -----------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-celery-worker
+    restart: unless-stopped
+    command: ["celery", "-A", "celery_app.celery_app", "worker", "--loglevel=info"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./backend:/app
+      - ./backend/portfolio.db:/app/portfolio.db
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    profiles:
+      - celery
+      - all
+    networks:
+      - portfolio-net
+
+  # -----------------------------------------------------------
+  # Optional: Celery Beat Scheduler (Periodic Tasks)
+  # Start with: docker compose --profile celery up
+  # -----------------------------------------------------------
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-celery-beat
+    restart: unless-stopped
+    command: ["celery", "-A", "celery_app.celery_app", "beat", "--loglevel=info"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./backend:/app
+      - ./backend/portfolio.db:/app/portfolio.db
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - celery
+      - all
+    networks:
+      - portfolio-net
+
+  # -----------------------------------------------------------
+  # Optional: PostgreSQL Database (Alternative to SQLite)
+  # Start with: docker compose --profile postgres up
+  # -----------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: portfolio-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio_password
+      POSTGRES_DB: portfolio_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    profiles:
+      - postgres
+      - all
+    networks:
+      - portfolio-net
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  portfolio-net:
+    driver: bridge
